@@ -150,10 +150,10 @@ function tilt(event: PointerEvent) {
   stack.value?.style.setProperty('--light-y', `${y * 100}%`)
   stack.value?.style.setProperty('--shadow-x', `${(0.5 - x) * 28}px`)
   stack.value?.style.setProperty('--shadow-y', `${26 + (1 - y) * 18}px`)
-  identity.value.style.setProperty('--rx', `${-(event.clientY - bounds.top - bounds.height / 2) / 40}deg`)
-  identity.value.style.setProperty('--ry', `${(event.clientX - bounds.left - bounds.width / 2) / 40}deg`)
+  stack.value?.style.setProperty('--rx', `${Math.max(-13, Math.min(13, (0.5 - y) * 24))}deg`)
+  stack.value?.style.setProperty('--ry', `${Math.max(-15, Math.min(15, (x - 0.5) * 28))}deg`)
 }
-function resetTilt() { identity.value?.style.setProperty('--rx', '0deg'); identity.value?.style.setProperty('--ry', '0deg') }
+function resetTilt() { stack.value?.style.setProperty('--rx', '0deg'); stack.value?.style.setProperty('--ry', '0deg'); stack.value?.style.setProperty('--light-x', '40%'); stack.value?.style.setProperty('--light-y', '20%') }
 const year = new Date().getFullYear()
 const copiedValue = ref('')
 let copyTimer: ReturnType<typeof setTimeout> | undefined
@@ -234,23 +234,23 @@ async function makePoster() {
             <div class="hero-meta"><template v-if="text(config.location)"><Icon name="globe" /><span>{{ text(config.location) }}</span><span class="meta-dot">·</span></template><span>{{ config.handle }}</span></div>
           </div>
           <div class="identity-stage reveal" style="--delay:220ms">
-            <div class="orbital orbital-one" aria-hidden="true"></div><div class="orbital orbital-two" aria-hidden="true"></div>
+            <div class="orbital orbital-one" aria-hidden="true"></div><div class="orbital orbital-two" aria-hidden="true"></div><div class="motion-aura" aria-hidden="true"></div><div class="motion-sparks" aria-hidden="true"><i v-for="n in 6" :key="n"></i></div>
             <span class="stage-coordinate coordinate-top" aria-hidden="true">PERSONAL IDENTITY — 001</span>
-            <div class="identity-stack" ref="stack" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed }" role="button" tabindex="0" :aria-label="stackOpen ? t.hoverCopy : t.revealShare" :aria-expanded="stackOpen" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @click="activateStack" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)">
+            <div class="identity-stack" ref="stack" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl }" role="button" tabindex="0" :aria-label="stackOpen ? t.hoverCopy : t.revealShare" :aria-expanded="stackOpen" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @click="activateStack" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)">
             <div class="identity-card identity-front" ref="identity" :aria-hidden="stackOpen">
-              <div class="card-sheen" aria-hidden="true"></div>
+              <div class="card-sheen" aria-hidden="true"></div><div class="motion-glint" aria-hidden="true"></div>
               <div class="identity-top"><span class="micro-label">{{ t.card }}</span><span class="identity-symbol" aria-hidden="true">✳</span></div>
               <div class="sculpture" aria-hidden="true"><span v-if="rippleKey" :key="rippleKey" class="avatar-ripple"></span><img v-if="config.avatar" class="sculpture-avatar" :src="asset(config.avatar)" alt="" /><template v-else><span class="sculpture-shadow">{{ config.monogram }}</span><span class="sculpture-letter">{{ config.monogram }}<i>.</i></span></template></div>
               <div class="identity-bottom"><div class="identity-owner"><img v-if="config.avatar" :src="asset(config.avatar)" alt="" /><span v-else class="mini-avatar">{{ config.monogram }}</span><div><strong>{{ config.name }}</strong><span>{{ t.available }}</span></div></div><span class="identity-qr" aria-hidden="true"><Icon name="qr" /></span></div>
               <div class="identity-edge"><span>DK CONNECT</span><span>01 — ∞</span></div>
             </div>
             <div class="identity-card identity-share" :aria-hidden="!stackOpen">
-              <div class="card-sheen" aria-hidden="true"></div>
+              <div class="card-sheen" aria-hidden="true"></div><div class="motion-glint" aria-hidden="true"></div>
               <div class="identity-top"><span class="micro-label">{{ t.share }}</span><Icon name="arrow" /></div>
               <div class="stack-qr"><img v-if="stackQr && !stackQrFailed" :src="stackQr" :alt="t.qr" draggable="false" @error="stackQrFailed = true" /><span v-else>{{ stackQrFailed ? t.qrFail : '···' }}</span></div>
               <div class="stack-share-caption"><strong>{{ config.name }}</strong><span>{{ t.scan }}</span></div>
               <div class="identity-edge"><span>DK CONNECT</span><span><Icon :name="copiedValue === shareUrl ? 'check' : 'copy'" /> {{ copiedValue === shareUrl ? t.linkCopied : t.hoverCopy }}</span></div>
-            </div>
+            </div><span v-if="copiedValue === shareUrl" class="motion-copy-burst" aria-hidden="true">✳</span>
             </div>
             <span class="stage-coordinate coordinate-bottom" aria-hidden="true"><span class="tiny-cross">+</span> LESS DISTANCE. MORE CONNECTION.</span>
           </div>
