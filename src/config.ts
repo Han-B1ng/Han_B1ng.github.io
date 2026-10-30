@@ -15,7 +15,7 @@ export type SocialCard = {
 }
 
 export const config = {
-  publicUrl: 'https://han-b1ng.github.io/Han_B1ng.github.io/', // Canonical GitHub Pages URL.
+  publicUrl: 'https://hanb1ng.com/', // Canonical personal domain.
   name: 'Han_B1ng',
   handle: '@Han_B1ng',
   monogram: 'H',

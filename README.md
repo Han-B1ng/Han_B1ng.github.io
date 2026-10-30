@@ -70,4 +70,6 @@ MIT，见 [LICENSE](LICENSE)。
 
 ## 本仓库部署
 
-此仓库通过 `.github/workflows/pages.yml` 在每次推送 `main` 后自动构建并发布 GitHub Pages。生产构建设置 `BASE_PATH=/Han_B1ng.github.io/`，名片分享链接设置为 `https://han-b1ng.github.io/Han_B1ng.github.io/`。
+此仓库通过 `.github/workflows/pages.yml` 在每次推送 `main` 后自动构建并发布 GitHub Pages。自定义域名目标为 `https://hanb1ng.com/`，生产构建设置 `BASE_PATH=/`，名片分享链接使用同一地址。配置文件变更不代表域名已经上线；以实际 DNS、证书和访问验证为准。
+
+域名配置与维护步骤见 [部署说明](docs/deployment.md)。
