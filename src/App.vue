@@ -30,6 +30,7 @@ const stackQrFailed = ref(false)
 const cursorHint = ref(false)
 const cursor = ref({ x: 0, y: 0 })
 let hoverTimer: ReturnType<typeof setTimeout> | undefined
+let revealTimer: ReturnType<typeof setTimeout> | undefined
 let mouseInside = false
 let lastPointerType = ''
 async function prepareStackQr() {
@@ -44,8 +45,8 @@ function moveStack(event: PointerEvent) {
 function enterStack(event: PointerEvent) {
   if (event.pointerType !== 'mouse') return
   mouseInside = true
-  stackUsed.value = true
-  stackOpen.value = true
+  clearTimeout(revealTimer)
+  revealTimer = setTimeout(() => { if (mouseInside) { stackUsed.value = true; stackOpen.value = true } }, 500)
   moveStack(event)
   clearTimeout(hoverTimer)
   hoverTimer = setTimeout(() => { if (mouseInside) cursorHint.value = true }, 1000)
@@ -54,6 +55,7 @@ function leaveStack(event?: PointerEvent) {
   if (event && event.pointerType !== 'mouse') return
   mouseInside = false
   clearTimeout(hoverTimer)
+  clearTimeout(revealTimer)
   cursorHint.value = false
   stackOpen.value = false
   resetTilt()
@@ -99,7 +101,7 @@ onMounted(() => {
     document.querySelectorAll('.social-card, .share-strip').forEach(el => { el.classList.add('scroll-enter'); scrollObserver?.observe(el) })
   }
 })
-onBeforeUnmount(() => { clearTimeout(timer); clearTimeout(hoverTimer); clearTimeout(copyTimer); scrollObserver?.disconnect(); clearPoster(); window.removeEventListener('pointerdown', outsideStack); window.removeEventListener('keydown', keydown); document.body.style.overflow = '' })
+onBeforeUnmount(() => { clearTimeout(timer); clearTimeout(hoverTimer); clearTimeout(revealTimer); clearTimeout(copyTimer); scrollObserver?.disconnect(); clearPoster(); window.removeEventListener('pointerdown', outsideStack); window.removeEventListener('keydown', keydown); document.body.style.overflow = '' })
 watch(modalOpen, async open => {
   document.body.style.overflow = open ? 'hidden' : ''
   if (open) { previousFocus = document.activeElement as HTMLElement; await nextTick(); modal.value?.querySelector<HTMLButtonElement>('button')?.focus() }
@@ -144,7 +146,7 @@ async function share() {
 function close() { selected.value = null; shareOpen.value = false; qrData.value = '' }
 function tilt(event: PointerEvent) {
   if (event.pointerType !== 'mouse' || window.matchMedia('(prefers-reduced-motion: reduce)').matches || !identity.value) return
-  const bounds = stack.value?.getBoundingClientRect() || identity.value.getBoundingClientRect()
+  const bounds = stack.value?.closest('.float-anchor')?.getBoundingClientRect() || identity.value.getBoundingClientRect()
   const x = (event.clientX - bounds.left) / bounds.width, y = (event.clientY - bounds.top) / bounds.height
   stack.value?.style.setProperty('--light-x', `${x * 100}%`)
   stack.value?.style.setProperty('--light-y', `${y * 100}%`)
@@ -235,15 +237,15 @@ async function makePoster() {
           </div>
           <div class="identity-stage reveal" style="--delay:220ms">
             <div class="orbital orbital-one" aria-hidden="true"></div><div class="orbital orbital-two" aria-hidden="true"></div><div class="motion-aura" aria-hidden="true"></div><div class="motion-sparks" aria-hidden="true"><i v-for="n in 6" :key="n"></i></div>
-            <span class="stage-coordinate coordinate-top" aria-hidden="true">PERSONAL IDENTITY — 001</span>
-            <div class="identity-stack" ref="stack" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl }" role="button" tabindex="0" :aria-label="stackOpen ? t.hoverCopy : t.revealShare" :aria-expanded="stackOpen" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @click="activateStack" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)">
-            <div class="identity-card identity-front" ref="identity" :aria-hidden="stackOpen">
+            <div class="ground-shadow" aria-hidden="true"></div><div class="orbit-front" aria-hidden="true"></div><span class="stage-coordinate coordinate-top" aria-hidden="true">PERSONAL IDENTITY — 001</span>
+            <div class="float-anchor" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack"><div class="float-rig" :class="{ 'is-sharing': stackOpen }"><div class="identity-stack" ref="stack" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl }" role="button" tabindex="0" :aria-label="stackOpen ? t.hoverCopy : t.revealShare" :aria-expanded="stackOpen" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @click="activateStack" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)">
+            <div class="identity-card identity-front" ref="identity" :aria-hidden="stackOpen"><div class="card-volume-back" aria-hidden="true"></div><div class="card-side card-side-right" aria-hidden="true"></div><div class="card-side card-side-bottom" aria-hidden="true"></div><div class="card-face">
               <div class="card-sheen" aria-hidden="true"></div><div class="motion-glint" aria-hidden="true"></div>
               <div class="identity-top"><span class="micro-label">{{ t.card }}</span><span class="identity-symbol" aria-hidden="true">✳</span></div>
               <div class="sculpture" aria-hidden="true"><span v-if="rippleKey" :key="rippleKey" class="avatar-ripple"></span><img v-if="config.avatar" class="sculpture-avatar" :src="asset(config.avatar)" alt="" /><template v-else><span class="sculpture-shadow">{{ config.monogram }}</span><span class="sculpture-letter">{{ config.monogram }}<i>.</i></span></template></div>
               <div class="identity-bottom"><div class="identity-owner"><img v-if="config.avatar" :src="asset(config.avatar)" alt="" /><span v-else class="mini-avatar">{{ config.monogram }}</span><div><strong>{{ config.name }}</strong><span>{{ t.available }}</span></div></div><span class="identity-qr" aria-hidden="true"><Icon name="qr" /></span></div>
               <div class="identity-edge"><span>DK CONNECT</span><span>01 — ∞</span></div>
-            </div>
+            </div></div>
             <div class="identity-card identity-share" :aria-hidden="!stackOpen">
               <div class="card-sheen" aria-hidden="true"></div><div class="motion-glint" aria-hidden="true"></div>
               <div class="identity-top"><span class="micro-label">{{ t.share }}</span><Icon name="arrow" /></div>
@@ -252,7 +254,7 @@ async function makePoster() {
               <div class="identity-edge"><span>DK CONNECT</span><span><Icon :name="copiedValue === shareUrl ? 'check' : 'copy'" /> {{ copiedValue === shareUrl ? t.linkCopied : t.hoverCopy }}</span></div>
             </div><span v-if="copiedValue === shareUrl" class="motion-copy-burst" aria-hidden="true">✳</span>
             </div>
-            <span class="stage-coordinate coordinate-bottom" aria-hidden="true"><span class="tiny-cross">+</span> LESS DISTANCE. MORE CONNECTION.</span>
+            </div></div><span class="stage-coordinate coordinate-bottom" aria-hidden="true"><span class="tiny-cross">+</span> LESS DISTANCE. MORE CONNECTION.</span>
           </div>
         </section>
         <section class="connections reveal" id="connections" aria-labelledby="connections-title" style="--delay:320ms">

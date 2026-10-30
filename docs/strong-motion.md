@@ -15,3 +15,9 @@ This branch starts from the published `baseline-2026-10-30` tag. The live `main`
 ## Review
 
 Run `npm ci && npm run dev`, then test at desktop and phone widths. The branch is not published to the main domain. Run `npm run build` before merging.
+
+## Floating volume study
+
+The card now has a front face, back plate, and thin right/bottom sides. A separate floating rig moves the card while its ground shadow and backlight change in sync. The foreground and background orbit segments frame the card. Hover waits 500 ms before opening the share card; the existing copy hint appears after one second.
+
+Each card is composited independently within the stack to prevent tilted faces from intersecting and cutting through the QR code. The foreground orbit moves behind the cards while sharing. Local browser verification confirmed an intact QR card, pointer-exit reset, and no page errors. Reduced-motion fallback remains available.
