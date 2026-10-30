@@ -1,3 +1,18 @@
+export type CardZone = 'top' | 'bottom' | 'left' | 'right' | 'none'
+
+/**
+ * Determine which flip zone of the card is hovered/clicked.
+ * Corners (14% × 14% at each corner) are reserved as neutral zones.
+ */
+export function getCardZone(x: number, y: number, cornerRatio = 0.14): CardZone {
+  if ((x < cornerRatio || x > 1 - cornerRatio) && (y < cornerRatio || y > 1 - cornerRatio)) {
+    return 'none'
+  }
+  if (y < 0.24) return 'top'
+  if (y > 0.76) return 'bottom'
+  return x < 0.5 ? 'left' : 'right'
+}
+
 /** Invert the projected quadrilateral, including perspective and inverted faces. */
 export function surfacePoint(points: { x: number; y: number }[], x: number, y: number) {
   const [p0, p1, p2, p3] = points

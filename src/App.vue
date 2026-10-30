@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import QRCode from 'qrcode'
 import Icon from './Icon.vue'
-import { surfacePoint } from './cardGeometry'
+import { getCardZone, surfacePoint, type CardZone } from './cardGeometry'
 import { createPoster } from './poster'
 import { config, type Language, type Localized, type SocialCard } from './config'
 const language = ref<Language>(config.language)
@@ -30,8 +30,8 @@ const stackPressed = ref(false)
 const turnX = ref(0)
 const turnY = ref(0)
 const turning = ref(false)
-type CardZone = 'top' | 'bottom' | 'left' | 'right' | 'none'
 const hoverZone = ref<CardZone>('right')
+const coreLayers = [-2.4, -1.2, 0, 1.2, 2.4]
 let flipTimer: ReturnType<typeof setTimeout> | undefined
 const flipHint = computed(() => {
   const hints = language.value === 'zh'
@@ -43,10 +43,7 @@ function cardZone(clientX: number, clientY: number): CardZone {
   const rect = stack.value?.closest('.float-anchor')?.getBoundingClientRect()
   if (!rect) return 'right'
   const x = (clientX - rect.left) / rect.width, y = (clientY - rect.top) / rect.height
-  if ((x < .25 || x > .75) && (y < .25 || y > .75)) return 'none'
-  if (y < .25) return 'top'
-  if (y > .75) return 'bottom'
-  return x < .5 ? 'left' : 'right'
+  return getCardZone(x, y)
 }
 function resetCard() {
   clearTimeout(flipTimer)
@@ -60,7 +57,7 @@ const cursorHint = ref(false)
 const cursor = ref({ x: 0, y: 0 })
 let hoverTimer: ReturnType<typeof setTimeout> | undefined
 let mouseInside = false
-let lastPointerType = ''
+let lastPointerType = 'mouse'
 let lightFrame = 0
 let pointerPosition: { x: number; y: number } | null = null
 function updateSurfaceLights() {
@@ -82,13 +79,25 @@ async function prepareStackQr() {
   try { stackQr.value = await QRCode.toDataURL(shareUrl, { margin: 2, width: 360, color: { dark: '#111111', light: '#ffffff' } }) }
   catch { stackQrFailed.value = true }
 }
+function applyPointerTilt(clientX: number, clientY: number) {
+  if (reducedMotion() || !identity.value) return
+  const bounds = stack.value?.closest('.float-anchor')?.getBoundingClientRect() || identity.value.getBoundingClientRect()
+  const x = Math.max(0, Math.min(1, (clientX - bounds.left) / bounds.width))
+  const y = Math.max(0, Math.min(1, (clientY - bounds.top) / bounds.height))
+  stack.value?.style.setProperty('--light-x', `${x * 100}%`)
+  stack.value?.style.setProperty('--light-y', `${y * 100}%`)
+  stack.value?.style.setProperty('--shadow-x', `${(0.5 - x) * 28}px`)
+  stack.value?.style.setProperty('--shadow-y', `${26 + (1 - y) * 18}px`)
+  stack.value?.style.setProperty('--rx', `${Math.max(-13, Math.min(13, (0.5 - y) * 24))}deg`)
+  stack.value?.style.setProperty('--ry', `${Math.max(-15, Math.min(15, (x - 0.5) * 28))}deg`)
+}
 function moveStack(event: PointerEvent) {
   if (event.pointerType !== 'mouse') return
   cursor.value = { x: Math.max(12, Math.min(event.clientX + 16, window.innerWidth - 236)), y: Math.min(event.clientY + 22, window.innerHeight - 52) }
   pointerPosition = { x: event.clientX, y: event.clientY }
   if (!lightFrame) lightFrame = requestAnimationFrame(updateSurfaceLights)
   hoverZone.value = cardZone(event.clientX, event.clientY)
-  if (!turning.value) tilt(event)
+  if (!turning.value) applyPointerTilt(event.clientX, event.clientY)
 }
 function enterStack(event: PointerEvent) {
   if (event.pointerType !== 'mouse') return
@@ -101,6 +110,7 @@ function enterStack(event: PointerEvent) {
 function leaveStack(event?: PointerEvent) {
   if (event && event.pointerType !== 'mouse') return
   mouseInside = false
+  pointerPosition = null
   cancelAnimationFrame(lightFrame); lightFrame = 0
   stackPressed.value = false
   clearTimeout(hoverTimer)
@@ -119,19 +129,37 @@ function activateStack(event: MouseEvent | KeyboardEvent) {
   stackUsed.value = true
   turning.value = true
   resetTilt()
-  // Half turns accumulate; crossing 360 degrees never jumps back to zero.
+  // In rotateX(turnX) rotateY(turnY), rotateY rotates around the X-rotated local Y-axis.
+  // When turnX is an odd multiple of 180deg, the local Y-axis points downward in screen space,
+  // so we invert the Y delta to keep left/right flips aligned with screen direction.
+  const xInverted = Math.abs(Math.round(turnX.value / 180)) % 2 === 1
+  const ySign = xInverted ? -1 : 1
   if (zone === 'top') turnX.value += 180
   else if (zone === 'bottom') turnX.value -= 180
-  else if (zone === 'left') turnY.value -= 180
-  else turnY.value += 180
+  else if (zone === 'left') turnY.value -= 180 * ySign
+  else turnY.value += 180 * ySign
   stackOpen.value = !stackOpen.value
   hoverZone.value = zone
-  flipTimer = setTimeout(() => { turning.value = false }, reducedMotion() ? 0 : 560)
+  if (lastPointerType !== 'mouse') {
+    stackPressed.value = false
+  }
+  flipTimer = setTimeout(() => {
+    turning.value = false
+    if (mouseInside && pointerPosition) {
+      stackPressed.value = true
+      applyPointerTilt(pointerPosition.x, pointerPosition.y)
+      if (!lightFrame) lightFrame = requestAnimationFrame(updateSurfaceLights)
+    } else if (!stack.value?.matches(':focus-visible')) {
+      stackPressed.value = false
+      resetTilt()
+    }
+  }, reducedMotion() ? 0 : 560)
 }
 function focusStack() {
   if (stack.value?.matches(':focus-visible')) stackPressed.value = true
 }
 function outsideStack(event: PointerEvent) {
+  lastPointerType = event.pointerType
   if (!stack.value?.closest('.float-anchor')?.contains(event.target as Node)) leaveStack()
 }
 let previousFocus: HTMLElement | null = null
@@ -205,17 +233,6 @@ async function share() {
   await showShare()
 }
 function close() { selected.value = null; shareOpen.value = false; qrData.value = '' }
-function tilt(event: PointerEvent) {
-  if (event.pointerType !== 'mouse' || window.matchMedia('(prefers-reduced-motion: reduce)').matches || !identity.value) return
-  const bounds = stack.value?.closest('.float-anchor')?.getBoundingClientRect() || identity.value.getBoundingClientRect()
-  const x = (event.clientX - bounds.left) / bounds.width, y = (event.clientY - bounds.top) / bounds.height
-  stack.value?.style.setProperty('--light-x', `${x * 100}%`)
-  stack.value?.style.setProperty('--light-y', `${y * 100}%`)
-  stack.value?.style.setProperty('--shadow-x', `${(0.5 - x) * 28}px`)
-  stack.value?.style.setProperty('--shadow-y', `${26 + (1 - y) * 18}px`)
-  stack.value?.style.setProperty('--rx', `${Math.max(-13, Math.min(13, (0.5 - y) * 24))}deg`)
-  stack.value?.style.setProperty('--ry', `${Math.max(-15, Math.min(15, (x - 0.5) * 28))}deg`)
-}
 function resetTilt() { stack.value?.style.setProperty('--rx', '0deg'); stack.value?.style.setProperty('--ry', '0deg'); stack.value?.style.setProperty('--light-x', '40%'); stack.value?.style.setProperty('--light-y', '20%') }
 const year = new Date().getFullYear()
 const copiedValue = ref('')
@@ -300,7 +317,8 @@ async function makePoster() {
             <div class="orbital orbital-one" aria-hidden="true"></div><div class="orbital orbital-two" aria-hidden="true"></div><div class="motion-aura" aria-hidden="true"></div><div class="motion-sparks" aria-hidden="true"><i v-for="n in 6" :key="n"></i></div>
             <div class="ground-shadow" aria-hidden="true"></div><div class="orbit-front" aria-hidden="true"></div><span class="stage-coordinate coordinate-top" aria-hidden="true">PERSONAL IDENTITY — 001</span>
             <div class="float-anchor" @click="activateStack" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack"><div class="float-rig" :class="{ 'is-sharing': stackOpen, 'is-pressed': stackPressed }"><div class="identity-stack" ref="stack" :style="{ '--turn-x': `${turnX}deg`, '--turn-y': `${turnY}deg` }" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl, 'is-pressed': stackPressed, 'is-turning': turning }" role="button" tabindex="0" :aria-label="t.revealShare" :aria-expanded="stackOpen" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)" @keydown.up.prevent="activateStack($event)" @keydown.down.prevent="activateStack($event)" @keydown.left.prevent="activateStack($event)" @keydown.right.prevent="activateStack($event)">
-            <div class="identity-card identity-front" ref="identity" :aria-hidden="stackOpen"><div class="card-volume-back" aria-hidden="true"></div><div class="card-side card-side-right" aria-hidden="true"></div><div class="card-side card-side-bottom" aria-hidden="true"></div><div class="card-face"><i v-for="n in 4" :key="n" class="surface-probe" :class="`probe-${n}`" aria-hidden="true"></i>
+            <div v-for="z in coreLayers" :key="z" class="card-core-layer" :style="{ '--core-z': `${z}px` }" aria-hidden="true"></div>
+            <div class="identity-card identity-front" ref="identity" :aria-hidden="stackOpen"><div class="card-face"><i v-for="n in 4" :key="n" class="surface-probe" :class="`probe-${n}`" aria-hidden="true"></i>
               <div class="card-sheen" aria-hidden="true"></div><div class="motion-glint" aria-hidden="true"></div>
               <div class="identity-top"><span class="micro-label">{{ t.card }}</span><span class="identity-symbol" aria-hidden="true">✳</span></div>
               <div class="sculpture" aria-hidden="true"><span v-if="rippleKey" :key="rippleKey" class="avatar-ripple"></span><img v-if="config.avatar" class="sculpture-avatar" :src="asset(config.avatar)" alt="" /><template v-else><span class="sculpture-shadow">{{ config.monogram }}</span><span class="sculpture-letter">{{ config.monogram }}<i>.</i></span></template></div>
