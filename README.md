@@ -82,5 +82,5 @@ MIT，见 [LICENSE](LICENSE)。
 - 首次运行浏览器回归：`npx playwright install chromium`，然后 `npm run test:e2e`。测试使用独立的本地 5175 端口，不占用预览页面。
 - 也可通过 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指向已安装的 Chrome 可执行文件。
 - `npm run og:render` 重新生成 `public/og-image.png`；修改姓名、头像、正式域名时同步检查 `index.html` 中的分享元信息。
-- `src/components/` 包含头像、社交网格和分享面板；`src/composables/usePreferences.ts` 管理偏好，`src/i18n.ts` 管理双语文案；`src/styles/` 按基础布局、卡片和入场分组，`src/style.css` 按原顺序导入。
+- `src/components/` 按表头、首页、名片、社交网格、分享弹窗和页尾拆分；`src/composables/` 分别管理偏好、卡片交互、入场、光条、语言过渡和分享，`usePageModel.ts` 负责装配。`src/locales/zh.ts`、`en.ts` 管理文案，由 `src/i18n.ts` 统一导出；`src/styles/` 按基础布局、卡片和入场分组，`src/style.css` 按原顺序导入。
 - `v1-final` 保留已确认的视觉版本。维护分支的提交不会自动更新线上站点，合并 `main` 后才触发发布。
