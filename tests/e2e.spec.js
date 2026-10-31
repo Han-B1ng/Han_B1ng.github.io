@@ -142,7 +142,7 @@ test('section entrance and one startup sweep finish without replay', async ({ pa
   await expect(page.locator('.section-header')).toHaveClass(/is-entering/);
   await settled(page);
   await expect(page.locator('.section-header')).not.toHaveClass(/is-entering/);
-  await expect(page.locator('.startup-glow')).toBeVisible();
+  await expect(page.locator('.startup-glow')).toBeVisible({timeout:5000});
   await expect(page.locator('.startup-glow')).toHaveCount(0);
   const title=await page.locator('#connections-title').boundingBox();
   expect(title.y+title.height).toBeLessThan(800);
@@ -160,4 +160,23 @@ test('mobile scroll cue disappears permanently after scrolling; reduced motion s
   await expect(page.locator('.scroll-cue')).toHaveCount(0);
   await page.emulateMedia({reducedMotion:'reduce'});await page.reload();await settled(page);
   await expect(page.locator('.startup-glow')).toHaveCount(0);
+});
+
+test('full-width section hands its identity to the header; sweep waits for landing', async ({ page }) => {
+  await page.setViewportSize({width:1280,height:800});await page.goto('/');
+  await expect(page.locator('.brand-sub')).toHaveText('PERSONAL SPACE');
+  await settled(page);
+  await expect(page.locator('.startup-glow')).toHaveCount(0);
+  await expect(page.locator('.startup-glow')).toBeVisible({timeout:5000});
+  const sweep=await page.locator('.startup-glow').evaluate(e=>getComputedStyle(e).animationDuration);
+  expect(sweep).toBe('1.2s');
+  await expect(page.locator('.startup-glow')).toHaveCount(0);
+  expect(await page.locator('.section-bar').evaluate(e=>e.getBoundingClientRect().width)).toBe(1280);
+  await page.evaluate(()=>window.scrollTo({top:60,behavior:'instant'}));
+  await expect(page.locator('.brand-sub')).toHaveText('00 / 首页');
+  await page.evaluate(()=>window.scrollTo({top:document.querySelector('.section-bar').getBoundingClientRect().top+scrollY-70,behavior:'instant'}));
+  await expect(page.locator('.brand-sub')).toHaveText('01 / 我的数字坐标');
+  await page.screenshot({path:'test-results/section-handoff.png'});
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  await expect(page.locator('.brand-sub')).toHaveText('PERSONAL SPACE');
 });

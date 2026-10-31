@@ -24,7 +24,7 @@ html::-webkit-scrollbar { display:none; }
 /* One startup pass, then return control to the scroll indicator. */
 .header-track.is-starting{opacity:1}
 .header-track.is-starting .header-glow{opacity:0}
-.startup-glow{position:absolute;top:0;height:2px;width:clamp(100px,18vw,240px);background:linear-gradient(90deg,transparent,var(--text),transparent);animation:startup-sweep .64s ease-in-out both}
+.startup-glow{position:absolute;top:0;height:2px;width:clamp(100px,18vw,240px);background:linear-gradient(90deg,transparent,var(--text),transparent);animation:startup-sweep 1.2s ease-in-out both}
 @keyframes startup-sweep{
   0%{left:0;transform:translateX(-100%);opacity:0}
   12%{opacity:1}
@@ -33,3 +33,18 @@ html::-webkit-scrollbar { display:none; }
   100%{left:0;transform:translateX(-100%);opacity:0}
 }
 @media(prefers-reduced-motion:reduce){.startup-glow{display:none;animation:none}}
+
+/* A full-bleed section landmark hands its identity to the fixed header. */
+.connections{border-top:0;padding-top:0}
+.section-bar{position:relative;width:100vw;margin-left:calc(50% - 50vw);min-height:64px;padding-inline:max(56px,calc((100% - 1180px)/2));display:flex;align-items:center;margin-bottom:30px;background:var(--surface);border-block:1px solid var(--line)}
+.section-bar-title{color:var(--muted);font-size:10px;letter-spacing:.12em}
+.section-bar.is-entering{opacity:var(--section-reveal,0);transform:translateY(calc((1 - var(--section-reveal,0)) * 16px))}
+.brand-sub{min-height:10px;display:grid;align-items:center;min-width:175px}
+.brand-sub>span{grid-area:1/1}
+.header-identity-enter-active,.header-identity-leave-active{transition:opacity .16s,transform .16s}
+.header-identity-enter-from{opacity:0;transform:translateY(6px)}
+.header-identity-leave-to{opacity:0;transform:translateY(-6px)}
+@media(max-width:1050px){.section-bar{padding-inline:32px}}
+@media(max-width:760px){.section-bar{padding-inline:20px;min-height:54px;margin-bottom:22px}.brand-sub{min-width:128px;font-size:6px;letter-spacing:.08em}}
+@media(prefers-reduced-motion:reduce){.section-bar.is-entering{opacity:1;transform:none}.header-identity-enter-active,.header-identity-leave-active{transition:none}}
+@media(max-width:360px){.brand-sub{min-width:100px}.toolbar{gap:4px}.brand{gap:7px}}

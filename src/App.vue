@@ -19,12 +19,30 @@ import { getCardZone, surfacePoint, type CardZone } from "./cardGeometry";
 import { createPoster } from "./poster";
 import { config, type Localized, type SocialCard } from "./config";
 const { language, theme } = usePreferences();
-const { scrolled, progress: scrollProgress } = useScrollHeader();
+const { scrolled, inConnections, progress: scrollProgress } = useScrollHeader();
 const sectionHeader = ref<HTMLElement>();
+const sectionBar = ref<HTMLElement>();
+const headerIdentity = computed(() => !scrolled.value ? 'PERSONAL SPACE' : inConnections.value
+  ? (language.value === 'zh' ? '01 / 我的数字坐标' : '01 / My digital coordinates')
+  : (language.value === 'zh' ? '00 / 首页' : '00 / Home'));
+let sweepTimer: ReturnType<typeof setTimeout> | undefined;
+let sweepRevision = 0;
+function cancelSweep() { sweepRevision++; clearTimeout(sweepTimer); startupSweep.value = false; }
+function scheduleSweep() {
+  const revision = ++sweepRevision;
+  const animations = Array.from(document.querySelector('.identity-stage')?.getAnimations({ subtree: true }) ?? [])
+    .filter(animation => Number.isFinite(Number(animation.effect?.getComputedTiming().endTime)));
+  void Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
+    if (revision !== sweepRevision || hasScrolled.value || reducedMotion()) return;
+    sweepTimer = setTimeout(() => {
+      if (revision === sweepRevision && !hasScrolled.value && !reducedMotion()) startupSweep.value = true;
+    }, 200);
+  });
+}
 const startupSweep = ref(false);
 const hasScrolled = ref(false);
 watch(scrolled, value => {
-  if (value) { hasScrolled.value = true; startupSweep.value = false; }
+  if (value) { hasScrolled.value = true; cancelSweep(); }
 });
 function finishSweep(event: AnimationEvent) {
   if (event.animationName === 'startup-sweep') startupSweep.value = false;
@@ -150,7 +168,7 @@ function finishEntrance() {
   turnY.value = 360;
   stackOpen.value = false;
   entering.value = false;
-  startupSweep.value = !reducedMotion() && !hasScrolled.value;
+  if (!reducedMotion() && !hasScrolled.value) scheduleSweep();
   if (topbar.value) {
     topbar.value.style.transform = "none";
     topbar.value.style.opacity = "1";
@@ -373,6 +391,7 @@ function startEntrance() {
     const headerEase = headerT * headerT * headerT;
     const sectionT = Math.max(0, Math.min(1, (progress - .72) / .28));
     const hintT = Math.max(0, Math.min(1, (progress - .78) / .22));
+    sectionBar.value?.style.setProperty('--section-reveal', `${sectionT * sectionT * (3 - 2 * sectionT)}`);
     sectionHeader.value?.style.setProperty('--section-reveal', `${sectionT * sectionT * (3 - 2 * sectionT)}`);
     sectionHeader.value?.style.setProperty('--hint-reveal', `${hintT * hintT * (3 - 2 * hintT)}`);
 
@@ -416,6 +435,7 @@ onMounted(() => {
   }
 });
 function disposeEffects() {
+  cancelSweep();
   languageDisposed = true;
   languageAnimations.forEach(animation => animation.cancel());
   motionQuery.removeEventListener("change", motionChanged);
@@ -556,7 +576,7 @@ const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const reducedMotion = () => motionQuery.matches;
 function motionChanged() {
   if (!reducedMotion()) return;
-  startupSweep.value = false;
+  cancelSweep();
   cancelAnimationFrame(entranceStartFrame);
   if (entering.value) {
     if (topbar.value) {
@@ -660,7 +680,7 @@ async function makePoster() {
           ><span class="brand-mark">h<span>.</span></span
           ><span
             >{{ config.name
-            }}<span class="brand-sub">PERSONAL SPACE</span></span
+            }}<span class="brand-sub"><Transition name="header-identity" mode="out-in"><span :key="headerIdentity">{{ headerIdentity }}</span></Transition></span></span
           ></a
         >
         <div class="toolbar">
@@ -927,9 +947,9 @@ async function makePoster() {
           aria-labelledby="connections-title"
           style="--delay: 1320ms"
         >
+          <div class="section-bar" ref="sectionBar" :class="{ 'is-entering': entering }"><span class="section-bar-title">01 / {{ language === 'zh' ? '我的数字坐标' : 'My digital coordinates' }}</span></div>
           <div class="section-header" ref="sectionHeader" :class="{ 'is-entering': entering }">
             <div>
-              <p class="eyebrow"><span>01</span> / {{ t.section }}</p>
               <h2 id="connections-title">{{ t.connect }}</h2>
             </div>
             <p class="section-hint">{{ t.hint }}</p>
