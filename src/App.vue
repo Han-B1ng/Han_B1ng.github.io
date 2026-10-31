@@ -13,11 +13,38 @@ import { words } from "./i18n";
 import AvatarImage from "./components/AvatarImage.vue";
 import SocialGrid from "./components/SocialGrid.vue";
 import SharePanel from "./components/SharePanel.vue";
+import { useScrollHeader } from "./composables/useScrollHeader";
 import { usePreferences } from "./composables/usePreferences";
 import { getCardZone, surfacePoint, type CardZone } from "./cardGeometry";
 import { createPoster } from "./poster";
 import { config, type Localized, type SocialCard } from "./config";
 const { language, theme } = usePreferences();
+const { scrolled, section, progress: sectionProgress } = useScrollHeader();
+const sectionNumber = computed(() => String(section.value).padStart(2, '0'));
+const sectionLabel = computed(() => (language.value === 'zh'
+  ? ['首页', '我的数字坐标']
+  : ['Home', 'My digital coordinates'])[section.value]);
+let languageBusy = false;
+let languageDisposed = false;
+let languageAnimations: Animation[] = [];
+async function toggleLanguage() {
+  if (languageBusy) return;
+  if (reducedMotion()) { language.value = language.value === 'zh' ? 'en' : 'zh'; return; }
+  languageBusy = true;
+  const nodes = Array.from(document.querySelectorAll<HTMLElement>('.hero-copy > *, .social-body, .social-status, .share-copy, .nav-share > span, .section-header > div, .section-hint, .stack-share-caption > span, .identity-top .micro-label, .identity-owner div > span, footer > span'));
+  try {
+    languageAnimations = nodes.map(node => node.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 90, fill: 'forwards' }));
+    await Promise.all(languageAnimations.map(animation => animation.finished));
+    if (languageDisposed) return;
+    language.value = language.value === 'zh' ? 'en' : 'zh';
+    await nextTick();
+    languageAnimations.forEach(animation => animation.cancel());
+    languageAnimations = nodes.map(node => node.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }));
+    await Promise.all(languageAnimations.map(animation => animation.finished));
+  } catch { /* Cancelled animations leave the current text visible. */ }
+  finally { languageAnimations.forEach(animation => animation.cancel()); languageAnimations = []; languageBusy = false; }
+}
+
 const text = (value: Localized) =>
   typeof value === "string" ? value : value[language.value];
 const t = computed(() => words[language.value]);
@@ -377,6 +404,8 @@ onMounted(() => {
   }
 });
 function disposeEffects() {
+  languageDisposed = true;
+  languageAnimations.forEach(animation => animation.cancel());
   motionQuery.removeEventListener("change", motionChanged);
   window.removeEventListener("load", startEntrance);
   window.removeEventListener("pointerdown", outsideStack);
@@ -612,7 +641,8 @@ async function makePoster() {
   <div class="page-shell" id="top">
     <div class="atmosphere" aria-hidden="true"></div>
     <div class="layout">
-      <header class="topbar topbar-drop" ref="topbar">
+      <div class="topbar-space" aria-hidden="true"></div>
+      <header class="topbar topbar-drop" :class="{ 'is-scrolled': scrolled }" ref="topbar">
         <a class="brand" href="#top" :aria-label="t.home"
           ><span class="brand-mark">h<span>.</span></span
           ><span
@@ -623,7 +653,7 @@ async function makePoster() {
         <div class="toolbar">
           <button
             class="language-button"
-            @click="language = language === 'zh' ? 'en' : 'zh'"
+            @click="toggleLanguage"
             :aria-label="t.language"
           >
             <span :class="{ active: language === 'zh' }">中</span
@@ -644,6 +674,13 @@ async function makePoster() {
             <span>{{ t.share }}</span
             ><Icon name="share" />
           </button>
+        </div>
+        <div class="header-track" :class="{ 'is-active': scrolled }" :style="{ '--section-progress': sectionProgress }">
+          <span class="header-track-line track-left" aria-hidden="true"></span>
+          <div class="header-section" :aria-label="sectionLabel">
+            <Transition name="section-number" mode="out-in"><span class="section-number-value" :key="sectionNumber">{{ sectionNumber }}<span class="header-section-label"> / {{ sectionLabel }}</span></span></Transition>
+          </div>
+          <span class="header-track-line track-right" aria-hidden="true"></span>
         </div>
       </header>
       <main>
@@ -899,7 +936,7 @@ async function makePoster() {
             @copy="copy"
           />
         </section>
-        <section class="share-strip reveal" style="--delay: 420ms">
+        <section id="share-section" class="share-strip reveal" style="--delay: 420ms">
           <div class="share-decoration" aria-hidden="true">✳</div>
           <div class="share-copy">
             <h2>{{ t.shareTitle }}</h2>
@@ -911,7 +948,7 @@ async function makePoster() {
           </button>
         </section>
       </main>
-      <footer>
+      <footer id="site-footer">
         <a href="#top" :aria-label="t.back" class="footer-wordmark"
           >h<span>.</span></a
         ><span

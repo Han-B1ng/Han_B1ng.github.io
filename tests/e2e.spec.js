@@ -81,6 +81,7 @@ test("long bilingual accounts fit responsive layouts", async ({ page }) => {
     await page.goto("/");
     await settled(page);
     await page.locator(".language-button").click();
+    expect(await page.locator("header").evaluate(e => Math.round(e.getBoundingClientRect().width))).toBe(width);
     const overflow = await page
       .locator(".social-card")
       .evaluateAll(
@@ -110,4 +111,23 @@ test("unconfigured platforms have no empty dialog action", async ({ page }) => {
   await expect(first.locator(".social-status")).toHaveText("即将连接");
   await expect(first.locator(".card-link")).toBeDisabled();
   await expect(first.locator(".card-copy")).toHaveCount(0);
+});
+
+test('following header tracks sections; language fades without restarting card entry', async ({ page }) => {
+  await page.goto('/'); await settled(page);
+  await page.locator('.language-button').click();
+  await expect(page.locator('html')).toHaveAttribute('lang','en');
+  await expect(page.locator('.identity-stack')).not.toHaveClass(/is-entering/);
+  await page.evaluate(() => window.scrollTo({top: document.querySelector('#connections').getBoundingClientRect().top + scrollY - innerHeight*.32 + 10, behavior:'instant'}));
+  await expect(page.locator('header')).toHaveClass(/is-scrolled/);
+  await expect(page.locator('.section-number-value')).toContainText('01');
+  await page.waitForTimeout(250);
+  expect(await page.locator('header').evaluate(e=>e.getBoundingClientRect().width)).toBe(await page.evaluate(()=>innerWidth));
+  expect(await page.locator('header').evaluate(e=>Math.abs(e.getBoundingClientRect().top))).toBeLessThan(1);
+  await page.evaluate(()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'instant'}));
+  await expect(page.locator('.section-number-value')).toContainText('01');
+  await page.screenshot({path:'test-results/following-header.png'});
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  await expect(page.locator('.header-track')).not.toHaveClass(/is-active/);
+  expect(await page.evaluate(()=>getComputedStyle(document.documentElement).scrollbarWidth)).toBe('none');
 });
