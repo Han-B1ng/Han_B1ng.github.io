@@ -162,16 +162,18 @@ test('mobile scroll cue disappears permanently after scrolling; reduced motion s
   await expect(page.locator('.startup-glow')).toHaveCount(0);
 });
 
-test('full-width section hands its identity to the header; sweep waits for landing', async ({ page }) => {
+test('full-width hairline aligns with content; sweep starts with aura', async ({ page }) => {
   await page.setViewportSize({width:1280,height:800});await page.goto('/');
   await expect(page.locator('.brand-sub')).toHaveText('PERSONAL SPACE');
   await settled(page);
-  await expect(page.locator('.startup-glow')).toHaveCount(0);
   await expect(page.locator('.startup-glow')).toBeVisible({timeout:5000});
   const sweep=await page.locator('.startup-glow').evaluate(e=>getComputedStyle(e).animationDuration);
-  expect(sweep).toBe('1.2s');
+  expect(sweep).toBe('1.4s');
+  expect(await page.locator('.startup-glow').evaluate(e=>getComputedStyle(e).animationIterationCount)).toBe('1');
   await expect(page.locator('.startup-glow')).toHaveCount(0);
   expect(await page.locator('.section-bar').evaluate(e=>e.getBoundingClientRect().width)).toBe(1280);
+  const alignment = await page.evaluate(()=>({marker:document.querySelector('.section-bar-inner').getBoundingClientRect().left,title:document.querySelector('#connections-title').getBoundingClientRect().left}));
+  expect(Math.abs(alignment.marker-alignment.title)).toBeLessThan(1);
   await page.evaluate(()=>window.scrollTo({top:60,behavior:'instant'}));
   await expect(page.locator('.brand-sub')).toHaveText('00 / 首页');
   await page.evaluate(()=>window.scrollTo({top:document.querySelector('.section-bar').getBoundingClientRect().top+scrollY-70,behavior:'instant'}));
@@ -179,4 +181,25 @@ test('full-width section hands its identity to the header; sweep waits for landi
   await page.screenshot({path:'test-results/section-handoff.png'});
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   await expect(page.locator('.brand-sub')).toHaveText('PERSONAL SPACE');
+});
+
+test('sweep shares aura start and has dim ends with a bright center', async ({ page }) => {
+  await page.addInitScript(()=>{
+    window.motionStarts={};
+    document.addEventListener('animationstart',e=>{
+      if(e.animationName==='aura-bloom'||e.animationName==='startup-sweep')window.motionStarts[e.animationName]=performance.now();
+    },true);
+  });
+  await page.goto('/');await expect(page.locator('.startup-glow')).toBeVisible();
+  const result=await page.evaluate(()=>{
+    const element=document.querySelector('.startup-glow');
+    const animation=element.getAnimations()[0]; animation.pause();
+    const samples=[140,700,1260].map(time=>{animation.currentTime=time;const style=getComputedStyle(element);return {opacity:Number(style.opacity),x:element.getBoundingClientRect().x}});
+    animation.play();return {samples,starts:window.motionStarts};
+  });
+  expect(Math.abs(result.starts['startup-sweep']-result.starts['aura-bloom'])).toBeLessThan(100);
+  expect(result.samples[1].opacity).toBeGreaterThan(result.samples[0].opacity);
+  expect(result.samples[1].opacity).toBeGreaterThan(result.samples[2].opacity);
+  expect(result.samples[0].x).toBeLessThan(result.samples[1].x);
+  expect(result.samples[1].x).toBeLessThan(result.samples[2].x);
 });

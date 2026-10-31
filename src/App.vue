@@ -25,19 +25,12 @@ const sectionBar = ref<HTMLElement>();
 const headerIdentity = computed(() => !scrolled.value ? 'PERSONAL SPACE' : inConnections.value
   ? (language.value === 'zh' ? '01 / 我的数字坐标' : '01 / My digital coordinates')
   : (language.value === 'zh' ? '00 / 首页' : '00 / Home'));
-let sweepTimer: ReturnType<typeof setTimeout> | undefined;
-let sweepRevision = 0;
-function cancelSweep() { sweepRevision++; clearTimeout(sweepTimer); startupSweep.value = false; }
-function scheduleSweep() {
-  const revision = ++sweepRevision;
-  const animations = Array.from(document.querySelector('.identity-stage')?.getAnimations({ subtree: true }) ?? [])
-    .filter(animation => Number.isFinite(Number(animation.effect?.getComputedTiming().endTime)));
-  void Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
-    if (revision !== sweepRevision || hasScrolled.value || reducedMotion()) return;
-    sweepTimer = setTimeout(() => {
-      if (revision === sweepRevision && !hasScrolled.value && !reducedMotion()) startupSweep.value = true;
-    }, 200);
-  });
+let sweepPlayed = false;
+function cancelSweep() { startupSweep.value = false; }
+function startSweepWithAura(event: AnimationEvent) {
+  if (event.animationName !== 'aura-bloom' || sweepPlayed || hasScrolled.value || reducedMotion()) return;
+  sweepPlayed = true;
+  startupSweep.value = true;
 }
 const startupSweep = ref(false);
 const hasScrolled = ref(false);
@@ -168,7 +161,6 @@ function finishEntrance() {
   turnY.value = 360;
   stackOpen.value = false;
   entering.value = false;
-  if (!reducedMotion() && !hasScrolled.value) scheduleSweep();
   if (topbar.value) {
     topbar.value.style.transform = "none";
     topbar.value.style.opacity = "1";
@@ -763,7 +755,7 @@ async function makePoster() {
           >
             <div class="orbital orbital-one" aria-hidden="true"></div>
             <div class="orbital orbital-two" aria-hidden="true"></div>
-            <div class="motion-aura" aria-hidden="true"></div>
+            <div class="motion-aura" aria-hidden="true" @animationstart="startSweepWithAura"></div>
             <div class="ground-shadow stage-ambient" aria-hidden="true"></div>
             <div class="orbit-front" aria-hidden="true"></div>
             <span
@@ -947,7 +939,7 @@ async function makePoster() {
           aria-labelledby="connections-title"
           style="--delay: 1320ms"
         >
-          <div class="section-bar" ref="sectionBar" :class="{ 'is-entering': entering }"><span class="section-bar-title">01 / {{ language === 'zh' ? '我的数字坐标' : 'My digital coordinates' }}</span></div>
+          <div class="section-bar" ref="sectionBar" :class="{ 'is-entering': entering }"><div class="section-bar-inner"><span class="section-index">01 /</span><span class="section-bar-title">{{ language === 'zh' ? '我的数字坐标' : 'My digital coordinates' }}</span></div></div>
           <div class="section-header" ref="sectionHeader" :class="{ 'is-entering': entering }">
             <div>
               <h2 id="connections-title">{{ t.connect }}</h2>
