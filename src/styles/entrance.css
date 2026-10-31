@@ -1,0 +1,267 @@
+/* Choreographed entrance: card enters showing FRONT face (avatar), flips to BACK face (QR code) in mid-flight, then flips back to FRONT face on landing. */
+
+.hero {
+  position: relative;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.identity-stage {
+  position: relative;
+  z-index: 3;
+}
+
+.identity-stage.is-entering .float-anchor {
+  pointer-events: none;
+}
+
+.card-entry-travel {
+  width: 100%;
+  height: 100%;
+  perspective: 1100px;
+  transform-style: flat;
+}
+
+.card-entry-travel.is-entering {
+  transform: translate3d(var(--entry-offset, 0px), var(--entry-rise, 0px), 0)
+    rotateZ(var(--entry-roll, 0deg));
+}
+
+.float-rig .identity-stack.is-entering {
+  transform: rotateY(var(--entry-angle, 0deg));
+  transition: none;
+}
+
+.copy-wipe {
+  animation: copy-wipe-reveal 0.76s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--wipe-delay, 200ms);
+  will-change: clip-path, transform, opacity, filter;
+}
+
+.copy-fade {
+  animation: copy-fade-in 0.68s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--fade-delay, 920ms);
+}
+
+.topbar-drop {
+  transform: translateY(-38px);
+  opacity: 0;
+}
+
+.stage-ambient {
+  animation: stage-ambient-fade 0.65s ease-out both;
+  animation-delay: 1520ms;
+}
+
+@keyframes copy-wipe-reveal {
+  0% {
+    opacity: 0.15;
+    clip-path: inset(-15% 100% -15% -5%);
+    transform: translateX(-26px);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(-15% -5% -15% -5%);
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes copy-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes topbar-drop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-38px);
+  }
+  36% {
+    opacity: 1;
+    transform: translateY(-14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stage-ambient-fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1050px) {
+  .orbit-front,
+  .identity-stage .orbital-one {
+    width: 360px;
+    height: 290px;
+  }
+  .identity-stage .orbital-two {
+    width: 390px;
+    height: 390px;
+  }
+}
+
+@media (max-width: 760px) {
+  .orbit-front,
+  .identity-stage .orbital-one {
+    width: 320px;
+    height: 270px;
+  }
+  .identity-stage .orbital-two {
+    width: 350px;
+    height: 350px;
+  }
+  .identity-stage .motion-aura {
+    width: 370px;
+    height: 420px;
+  }
+}
+
+/* Disable movement without removing the translations needed for centering. */
+
+@media (prefers-reduced-motion: reduce) {
+  .card-entry-travel.is-entering,
+  .float-rig .identity-stack.is-entering,
+  .copy-wipe,
+  .copy-fade,
+  .topbar-drop,
+  .stage-ambient {
+    animation: none !important;
+    clip-path: none;
+    transform: none;
+    filter: none;
+    opacity: 1;
+  }
+  .orbit-front,
+  .identity-stage .orbital-one,
+  .identity-stage .orbital-two {
+    animation: none !important;
+    -webkit-mask-image: none;
+    mask-image: none;
+    opacity: 1;
+  }
+  .identity-stage .orbital-two {
+    opacity: 0.68;
+  }
+  .identity-stage .motion-aura {
+    animation: none !important;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.82;
+  }
+}
+
+/* Shared reveal phases at every width; only the desktop layout needs a travel mask. */
+
+.hero-copy .copy-wipe,
+.hero-copy .copy-fade {
+  animation: none;
+  opacity: 1;
+  filter: none;
+  transform: none;
+  clip-path: none;
+}
+
+.hero-copy.is-revealing .copy-wipe,
+.hero-copy.is-revealing .copy-fade {
+  opacity: var(--passed-alpha, 0);
+  filter: blur(calc((1 - var(--passed-alpha, 0)) * 3px));
+}
+
+@media (min-width: 761px) {
+  .hero-copy.is-revealing {
+    mask-image: linear-gradient(
+      to right,
+      #000 max(0px, calc(var(--copy-revealed, 0px) - 70px)),
+      transparent var(--copy-revealed, 0px)
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      #000 max(0px, calc(var(--copy-revealed, 0px) - 70px)),
+      transparent var(--copy-revealed, 0px)
+    );
+  }
+}
+
+/* Keep the camera local to the travelling card; start only after measuring its anchor. */
+
+.identity-stage.is-entering:not(.is-entry-ready) .card-entry-travel {
+  visibility: hidden;
+  animation: none;
+  transform: translate3d(var(--entry-offset, 0px), 0, 0);
+}
+
+.identity-stage.is-entering:not(.is-entry-ready) .identity-stack {
+  animation: none !important;
+  transform: rotateY(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar-drop {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Static loading surface and initials also cover failed image URLs. */
+
+.avatar-image {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.avatar-image > img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  border: 0;
+  border-radius: inherit;
+}
+
+.avatar-loading > img {
+  opacity: 0;
+}
+
+.avatar-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 600 1em/1 sans-serif;
+  letter-spacing: normal;
+  color: var(--text);
+}
+
+.sculpture-avatar .avatar-placeholder {
+  font-size: 64px;
+}
+
+.card-link:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.card-link:disabled:after {
+  display: none;
+}

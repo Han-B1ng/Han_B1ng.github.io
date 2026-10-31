@@ -75,3 +75,12 @@ MIT，见 [LICENSE](LICENSE)。
 此仓库通过 `.github/workflows/pages.yml` 在推送 `main` 后自动构建并发布。正式域名为 `https://hanb1ng.com/`，生产构建 `BASE_PATH=/`，`src/config.ts` 的 `publicUrl` 使用同一地址。
 
 合并部署前核对 GitHub Pages 自定义域名配置；不要用项目子目录路径覆盖域名根路径。Cloudflare Pages 同样使用根路径、`npm run build` 和 `dist`。
+
+## 维护与验证
+
+- 推荐 Node.js 22.12+。`npm ci` 安装锁定依赖，`npm test` 运行几何测试，`npm run build` 同时执行 TypeScript 严格检查和生产构建。
+- 首次运行浏览器回归：`npx playwright install chromium`，然后 `npm run test:e2e`。测试使用独立的本地 5175 端口，不占用预览页面。
+- 也可通过 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指向已安装的 Chrome 可执行文件。
+- `npm run og:render` 重新生成 `public/og-image.png`；修改姓名、头像、正式域名时同步检查 `index.html` 中的分享元信息。
+- `src/components/` 包含头像、社交网格和分享面板；`src/composables/usePreferences.ts` 管理偏好，`src/i18n.ts` 管理双语文案；`src/styles/` 按基础布局、卡片和入场分组，`src/style.css` 按原顺序导入。
+- `v1-final` 保留已确认的视觉版本。维护分支的提交不会自动更新线上站点，合并 `main` 后才触发发布。

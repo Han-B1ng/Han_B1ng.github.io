@@ -5,3 +5,6 @@ dist/
 work/
 
 .idea/
+
+/test-results/
+/playwright-report/
