@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: "npm run dev -- --host 127.0.0.1 --port 5175 --strictPort",
+    command: process.env.E2E_PREVIEW ? "npm run preview -- --host 127.0.0.1 --port 5175 --strictPort" : "npm run dev -- --host 127.0.0.1 --port 5175 --strictPort",
     url: "http://127.0.0.1:5175",
     reuseExistingServer: false,
   },

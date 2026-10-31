@@ -84,3 +84,9 @@ MIT，见 [LICENSE](LICENSE)。
 - `npm run og:render` 重新生成 `public/og-image.png`；修改姓名、头像、正式域名时同步检查 `index.html` 中的分享元信息。
 - `src/components/` 按表头、首页、名片、社交网格、分享弹窗和页尾拆分；`src/composables/` 分别管理偏好、卡片交互、入场、光条、语言过渡和分享，`usePageModel.ts` 负责装配。`src/locales/zh.ts`、`en.ts` 管理文案，由 `src/i18n.ts` 统一导出；`src/styles/` 按基础布局、卡片和入场分组，`src/style.css` 按原顺序导入。
 - `v1-final` 保留已确认的视觉版本。维护分支的提交不会自动更新线上站点，合并 `main` 后才触发发布。
+
+### 性能验证
+
+首屏离开视野或标签页进入后台时，持续装饰动画会暂停；返回后恢复，系统减少动态效果设置继续有效。海报代码在导出时加载，Telegram 二维码原图在打开弹窗时加载。
+
+本地验证生产构建：先运行 `npm run build`，再运行 `E2E_PREVIEW=1 npm run test:e2e`。此模式使用本地静态预览服务；改写源码配置的用例仅在普通 `npm run test:e2e` 中执行。真实网络延迟和缓存应在部署后检查。

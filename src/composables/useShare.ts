@@ -6,7 +6,6 @@ import {
   type Language,
   type Localized,
 } from "../config";
-import { createPoster } from "../poster";
 import type { Words } from "../i18n";
 export function useShare(context: {
   t: Ref<Words>;
@@ -124,6 +123,7 @@ export function useShare(context: {
     posterBusy.value = true;
     const revision = posterRevision;
     try {
+      const { createPoster } = await import("../poster");
       const blob = await createPoster({
         name: config.name,
         greeting: text(config.greeting),

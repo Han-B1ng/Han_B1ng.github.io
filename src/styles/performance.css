@@ -1,0 +1,10 @@
+/* Only looping decorations pause. The first animation on rings/aura is a finite reveal. */
+.is-motion-idle .float-rig,
+.is-motion-idle .ground-shadow,
+.is-motion-idle .atmosphere,
+.is-motion-idle .atmosphere::after,
+.is-motion-idle .sculpture-letter { animation-play-state:paused!important; }
+.is-motion-idle .orbital-one,
+.is-motion-idle .orbital-two,
+.is-motion-idle .orbit-front,
+.is-motion-idle .motion-aura { animation-play-state:running,paused!important; }

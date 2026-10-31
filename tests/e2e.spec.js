@@ -100,6 +100,7 @@ test("long bilingual accounts fit responsive layouts", async ({ page }) => {
 });
 
 test("unconfigured platforms have no empty dialog action", async ({ page }) => {
+  test.skip(!!process.env.E2E_PREVIEW, "Source-config fixture is exercised by the development suite");
   await page.route("**/src/config.ts", async route => {
     const response = await route.fetch();
     const source = await response.text();
@@ -287,4 +288,31 @@ test('startup finish never exposes the idle progress beam during track fadeout',
   await expect(page.locator('.header-glow')).toHaveCSS('opacity','1');
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   await expect(page.locator('.header-glow')).toHaveCSS('opacity','0');
+});
+
+
+test('decorative loops pause offscreen and in background; entrance stays independent', async ({ page }) => {
+  await page.setViewportSize({width:1280,height:700});await page.goto('/');await settled(page);
+  await page.evaluate(()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'instant'}));
+  await expect(page.locator('.page-shell')).toHaveClass(/is-motion-idle/);
+  await expect(page.locator('.float-rig')).toHaveCSS('animation-play-state','paused');
+  const ring=await page.locator('.orbital-one').evaluate(e=>getComputedStyle(e).animationPlayState);
+  expect(ring).toBe('running, paused');
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  await expect(page.locator('.page-shell')).not.toHaveClass(/is-motion-idle/);
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))});
+  await expect(page.locator('.page-shell')).toHaveClass(/is-motion-idle/);
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'))});
+  await expect(page.locator('.page-shell')).not.toHaveClass(/is-motion-idle/);
+});
+test('poster code and Telegram original load only when requested', async ({ page }) => {
+  const requests=[];page.on('request',r=>requests.push(r.url()));
+  await page.goto('/');await settled(page);
+  expect(requests.some(url=>/\/poster[-.]|telegram-qr\.png/.test(url))).toBe(false);
+  await page.mouse.wheel(0,120);await page.locator('.card-qr-link').click();
+  await expect(page.locator('.qr-frame-original img')).toBeVisible();
+  expect(requests.some(url=>url.includes('telegram-qr.png'))).toBe(true);
+  await page.keyboard.press('Escape');await page.locator('.share-strip button').click();
+  await page.locator('.poster-button').click();await expect(page.locator('.poster-preview img')).toBeVisible();
+  expect(requests.some(url=>/\/poster[-.]/.test(url))).toBe(true);
 });

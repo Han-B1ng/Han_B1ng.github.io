@@ -107,6 +107,9 @@ export function useIdentityCard(context: {
   let lightFrame = 0;
   let pointerPosition: { x: number; y: number } | null = null;
   function updateSurfaceLights() {
+    const bounds = identity.value?.getBoundingClientRect();
+    if (document.hidden || (bounds && (bounds.bottom < 0 || bounds.top > innerHeight))) { lightFrame = 0; return; }
+
     if (!mouseInside || !pointerPosition) {
       lightFrame = 0;
       return;

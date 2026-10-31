@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { ref } from "vue";
+import { useMotionBudget } from "./composables/useMotionBudget";
+const pageShell = ref<HTMLElement>();
+useMotionBudget(pageShell);
 import { usePageModel } from "./composables/usePageModel";
 import TopBar from "./components/TopBar.vue";
 import HeroSection from "./components/HeroSection.vue";
@@ -26,7 +30,7 @@ const {
 } = model;
 </script>
 <template>
-  <div class="page-shell" id="top">
+  <div class="page-shell" id="top" ref="pageShell">
     <div class="atmosphere" aria-hidden="true"></div>
     <div class="layout">
       <div class="topbar-space" aria-hidden="true"></div>
