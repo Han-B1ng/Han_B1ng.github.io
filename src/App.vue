@@ -19,11 +19,17 @@ import { getCardZone, surfacePoint, type CardZone } from "./cardGeometry";
 import { createPoster } from "./poster";
 import { config, type Localized, type SocialCard } from "./config";
 const { language, theme } = usePreferences();
-const { scrolled, section, progress: sectionProgress } = useScrollHeader();
-const sectionNumber = computed(() => String(section.value).padStart(2, '0'));
-const sectionLabel = computed(() => (language.value === 'zh'
-  ? ['首页', '我的数字坐标']
-  : ['Home', 'My digital coordinates'])[section.value]);
+const { scrolled, progress: scrollProgress } = useScrollHeader();
+const sectionHeader = ref<HTMLElement>();
+const startupSweep = ref(false);
+const hasScrolled = ref(false);
+watch(scrolled, value => {
+  if (value) { hasScrolled.value = true; startupSweep.value = false; }
+});
+function finishSweep(event: AnimationEvent) {
+  if (event.animationName === 'startup-sweep') startupSweep.value = false;
+}
+
 let languageBusy = false;
 let languageDisposed = false;
 let languageAnimations: Animation[] = [];
@@ -144,6 +150,7 @@ function finishEntrance() {
   turnY.value = 360;
   stackOpen.value = false;
   entering.value = false;
+  startupSweep.value = !reducedMotion() && !hasScrolled.value;
   if (topbar.value) {
     topbar.value.style.transform = "none";
     topbar.value.style.opacity = "1";
@@ -364,6 +371,11 @@ function startEntrance() {
     revealPassedText(progress);
     const headerT = Math.max(0, Math.min(1, (progress - 0.72) / 0.28));
     const headerEase = headerT * headerT * headerT;
+    const sectionT = Math.max(0, Math.min(1, (progress - .72) / .28));
+    const hintT = Math.max(0, Math.min(1, (progress - .78) / .22));
+    sectionHeader.value?.style.setProperty('--section-reveal', `${sectionT * sectionT * (3 - 2 * sectionT)}`);
+    sectionHeader.value?.style.setProperty('--hint-reveal', `${hintT * hintT * (3 - 2 * hintT)}`);
+
     if (topbar.value) {
       topbar.value.style.transform = `translateY(${-38 * (1 - headerEase)}px)`;
       topbar.value.style.opacity = `${Math.min(1, headerT * 2)}`;
@@ -544,6 +556,7 @@ const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const reducedMotion = () => motionQuery.matches;
 function motionChanged() {
   if (!reducedMotion()) return;
+  startupSweep.value = false;
   cancelAnimationFrame(entranceStartFrame);
   if (entering.value) {
     if (topbar.value) {
@@ -675,13 +688,7 @@ async function makePoster() {
             ><Icon name="share" />
           </button>
         </div>
-        <div class="header-track" :class="{ 'is-active': scrolled }" :style="{ '--section-progress': sectionProgress }">
-          <span class="header-track-line track-left" aria-hidden="true"></span>
-          <div class="header-section" :aria-label="sectionLabel">
-            <Transition name="section-number" mode="out-in"><span class="section-number-value" :key="sectionNumber">{{ sectionNumber }}<span class="header-section-label"> / {{ sectionLabel }}</span></span></Transition>
-          </div>
-          <span class="header-track-line track-right" aria-hidden="true"></span>
-        </div>
+        <div class="header-track" :class="{ 'is-active': scrolled, 'is-starting': startupSweep }" :style="{ '--scroll-progress': scrollProgress }" aria-hidden="true"><span class="header-glow"></span><span v-if="startupSweep" class="startup-glow" @animationend="finishSweep"></span></div>
       </header>
       <main>
         <section class="hero" aria-labelledby="hero-title">
@@ -915,12 +922,12 @@ async function makePoster() {
           </div>
         </section>
         <section
-          class="connections reveal"
+          class="connections"
           id="connections"
           aria-labelledby="connections-title"
           style="--delay: 1320ms"
         >
-          <div class="section-header">
+          <div class="section-header" ref="sectionHeader" :class="{ 'is-entering': entering }">
             <div>
               <p class="eyebrow"><span>01</span> / {{ t.section }}</p>
               <h2 id="connections-title">{{ t.connect }}</h2>
@@ -947,6 +954,7 @@ async function makePoster() {
             ><Icon name="arrow" />
           </button>
         </section>
+        <a v-if="!entering && !hasScrolled" class="scroll-cue" href="#connections" :aria-label="t.contact"><span>{{ language === 'zh' ? '向下探索' : 'Scroll to explore' }}</span><span class="scroll-cue-arrow" aria-hidden="true">↓</span></a>
       </main>
       <footer id="site-footer">
         <a href="#top" :aria-label="t.back" class="footer-wordmark"

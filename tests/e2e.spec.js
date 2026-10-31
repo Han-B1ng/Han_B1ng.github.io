@@ -113,21 +113,51 @@ test("unconfigured platforms have no empty dialog action", async ({ page }) => {
   await expect(first.locator(".card-copy")).toHaveCount(0);
 });
 
-test('following header tracks sections; language fades without restarting card entry', async ({ page }) => {
+test('following header moves its top glow with scroll; language does not restart entry', async ({ page }) => {
   await page.goto('/'); await settled(page);
   await page.locator('.language-button').click();
   await expect(page.locator('html')).toHaveAttribute('lang','en');
   await expect(page.locator('.identity-stack')).not.toHaveClass(/is-entering/);
   await page.evaluate(() => window.scrollTo({top: document.querySelector('#connections').getBoundingClientRect().top + scrollY - innerHeight*.32 + 10, behavior:'instant'}));
   await expect(page.locator('header')).toHaveClass(/is-scrolled/);
-  await expect(page.locator('.section-number-value')).toContainText('01');
+  await expect(page.locator('.header-section')).toHaveCount(0);
   await page.waitForTimeout(250);
   expect(await page.locator('header').evaluate(e=>e.getBoundingClientRect().width)).toBe(await page.evaluate(()=>innerWidth));
   expect(await page.locator('header').evaluate(e=>Math.abs(e.getBoundingClientRect().top))).toBeLessThan(1);
+  const glowBefore = await page.locator('.header-glow').boundingBox();
   await page.evaluate(()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'instant'}));
-  await expect(page.locator('.section-number-value')).toContainText('01');
+  await page.waitForTimeout(200);
+  const glowAfter = await page.locator('.header-glow').boundingBox();
+  expect(glowAfter.x).toBeGreaterThan(glowBefore.x);
+  expect(glowAfter.y).toBe(0);
   await page.screenshot({path:'test-results/following-header.png'});
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   await expect(page.locator('.header-track')).not.toHaveClass(/is-active/);
   expect(await page.evaluate(()=>getComputedStyle(document.documentElement).scrollbarWidth)).toBe('none');
+});
+
+test('section entrance and one startup sweep finish without replay', async ({ page }) => {
+  await page.setViewportSize({width:1280,height:800});
+  await page.goto('/');
+  await expect(page.locator('.section-header')).toHaveClass(/is-entering/);
+  await settled(page);
+  await expect(page.locator('.section-header')).not.toHaveClass(/is-entering/);
+  await expect(page.locator('.startup-glow')).toBeVisible();
+  await expect(page.locator('.startup-glow')).toHaveCount(0);
+  const title=await page.locator('#connections-title').boundingBox();
+  expect(title.y+title.height).toBeLessThan(800);
+  await page.screenshot({path:'test-results/desktop-discovery.png'});
+  await page.locator('.language-button').click();
+  await expect(page.locator('html')).toHaveAttribute('lang','en');
+  await expect(page.locator('.startup-glow')).toHaveCount(0);
+});
+test('mobile scroll cue disappears permanently after scrolling; reduced motion skips sweep', async ({ page }) => {
+  await page.setViewportSize({width:390,height:844});await page.goto('/');await settled(page);
+  await expect(page.locator('.scroll-cue')).toBeVisible();
+  await page.locator('.scroll-cue').click();
+  await expect(page.locator('.scroll-cue')).toHaveCount(0);
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  await expect(page.locator('.scroll-cue')).toHaveCount(0);
+  await page.emulateMedia({reducedMotion:'reduce'});await page.reload();await settled(page);
+  await expect(page.locator('.startup-glow')).toHaveCount(0);
 });

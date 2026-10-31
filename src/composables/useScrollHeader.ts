@@ -1,27 +1,15 @@
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 
-/** Track existing document sections without changing their layout or scrolling. */
+/** Track document scroll progress without changing their layout or scrolling. */
 export function useScrollHeader() {
   const scrolled = ref(false)
-  const section = ref(0)
   const progress = ref(0)
   let frame = 0
   const update = () => {
     frame = 0
     scrolled.value = window.scrollY > 24
-    const elements = ['.hero', '#connections']
-      .map(selector => document.querySelector<HTMLElement>(selector))
-    const line = window.innerHeight * .32
-    let active = 0
-    elements.forEach((element, index) => {
-      if (element && element.getBoundingClientRect().top <= line) active = index
-    })
-    const bottom = window.scrollY > 24 && window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 3
-    if (bottom) active = elements.length - 1
-    section.value = active
-    const top = elements[active]?.getBoundingClientRect().top ?? 0
-    const next = elements[active + 1]?.getBoundingClientRect().top
-    progress.value = bottom ? 1 : Math.max(0, Math.min(1, (line - top) / Math.max(1, next === undefined ? (elements[active]?.offsetHeight ?? 1) : next - top)))
+    const range = document.documentElement.scrollHeight - window.innerHeight
+    progress.value = range > 0 ? Math.max(0, Math.min(1, window.scrollY / range)) : 0
   }
   const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
   onMounted(() => {
@@ -34,5 +22,5 @@ export function useScrollHeader() {
     window.removeEventListener('scroll', schedule)
     window.removeEventListener('resize', schedule)
   })
-  return { scrolled, section, progress }
+  return { scrolled, progress }
 }

@@ -265,3 +265,15 @@
 .card-link:disabled:after {
   display: none;
 }
+
+/* Make the next section visible in the desktop fold; do not squeeze mobile content. */
+@media(min-width:761px){.hero{min-height:clamp(500px,calc(100svh - 250px),650px)}}
+.section-header.is-entering>div{opacity:var(--section-reveal,0);transform:translateY(calc((1 - var(--section-reveal,0)) * 16px))}
+.section-header.is-entering>.section-hint{opacity:var(--hint-reveal,0);transform:translateY(calc((1 - var(--hint-reveal,0)) * 16px))}
+.scroll-cue{display:none}
+@media(max-width:760px){
+  .scroll-cue{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:12px;padding:10px 16px;border:1px solid var(--line);border-radius:24px;background:var(--surface);color:var(--muted);font-size:10px;box-shadow:0 4px 20px var(--shadow)}
+  .scroll-cue-arrow{animation:scroll-cue-nudge .8s ease-in-out 2}
+}
+@keyframes scroll-cue-nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+@media(prefers-reduced-motion:reduce){.scroll-cue-arrow{animation:none}.section-header.is-entering>div,.section-header.is-entering>.section-hint{opacity:1;transform:none}}
