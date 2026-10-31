@@ -1,0 +1,14 @@
+{
+  "name": "dk-motion-kit",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "skills/dk-motion-kit/assets/starter"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @dk-motion-kit/starter",
+    "build": "npm run build --workspace @dk-motion-kit/starter",
+    "preview": "npm run preview --workspace @dk-motion-kit/starter",
+    "test": "npm run test --workspace @dk-motion-kit/starter"
+  }
+}

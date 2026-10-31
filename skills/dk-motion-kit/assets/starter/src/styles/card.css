@@ -1,0 +1,535 @@
+/* One physical card: stable hit area > entry travel > idle rig > pointer pressure > flip assembly > faces. */
+
+.identity-stack {
+  position: relative;
+  cursor: pointer;
+  outline: none;
+  --rx: 0deg;
+  --ry: 0deg;
+  --light-x: 40%;
+  --light-y: 20%;
+}
+
+.identity-stack .identity-card {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.identity-stage {
+  perspective: 1200px;
+  min-height: 520px;
+}
+
+.float-anchor {
+  position: relative;
+  width: 342px;
+  height: 390px;
+  z-index: 2;
+  perspective: none;
+  transform-style: flat;
+}
+
+.float-rig {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: levitate-rig 8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.float-rig.is-sharing,
+.float-rig.is-pressed,
+.float-rig.is-entering {
+  animation-play-state: paused;
+}
+
+.card-pressure {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.16s ease-out;
+}
+
+.float-rig .identity-stack {
+  width: 100%;
+  height: 100%;
+  animation: none;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--turn-x, 0deg)) rotateY(var(--turn-y, 0deg));
+  transition: transform 0.54s cubic-bezier(0.2, 0.85, 0.24, 1);
+}
+
+.card-core-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 19px;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    #8e95a5 0%,
+    #303543 45%,
+    #aeb5c4 75%,
+    #232732 100%
+  );
+  border: 1px solid #d8deeb55;
+  box-shadow: inset 0 0 0 1px #ffffff18;
+  transform: translateZ(var(--core-z, 0px));
+  backface-visibility: visible;
+}
+
+:root[data-theme="light"] .card-core-layer {
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #b8beca 45%,
+    #eef0f4 75%,
+    #9298a6 100%
+  );
+  border-color: #ffffffaa;
+  box-shadow: inset 0 0 0 1px #42485b1f;
+}
+
+.float-rig .identity-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 19px;
+  overflow: hidden;
+  background: linear-gradient(140deg, var(--card-top), var(--card-bottom) 80%);
+  border: 1px solid #ffffff48;
+  box-shadow:
+    inset 0 1px 0 #ffffff70,
+    0 24px 45px #0005;
+  transform: rotateY(0deg) translateZ(3.6px);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.float-rig .identity-share {
+  position: absolute;
+  inset: 0;
+  border-radius: 19px;
+  overflow: hidden;
+  background: linear-gradient(140deg, var(--card-top), var(--card-bottom));
+  border: 1px solid #ffffff35;
+  transform: rotateY(180deg) translateZ(3.6px);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  opacity: 1;
+  box-shadow: 0 15px 35px #0005;
+}
+
+:root[data-theme="light"] .float-rig .identity-stack .identity-front,
+:root[data-theme="light"] .float-rig .identity-stack .identity-share {
+  border-color: #fffc;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 20px 40px var(--shadow);
+}
+
+.float-rig .sculpture-avatar {
+  animation: none;
+  transform: rotate(-3deg);
+  box-shadow: 0 20px 35px #0008;
+}
+
+.ground-shadow {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  width: 280px;
+  height: 45px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #000e 0%, #0008 40%, transparent 72%);
+  filter: blur(8px);
+  transform: translateX(-50%);
+  animation: levitate-shadow 8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+:root[data-theme="light"] .ground-shadow {
+  opacity: 0.35;
+}
+
+@keyframes levitate-rig {
+  0%,
+  100% {
+    transform: translateY(9px) rotateX(6deg) rotateY(-12deg) rotateZ(-1deg);
+  }
+  25% {
+    transform: translateY(-7px) rotateX(2deg) rotateY(-8deg) rotateZ(1deg);
+  }
+  50% {
+    transform: translateY(-18px) rotateX(-3deg) rotateY(-5deg) rotateZ(2deg);
+  }
+  75% {
+    transform: translateY(-3px) rotateX(1deg) rotateY(-10deg) rotateZ(0deg);
+  }
+}
+
+@keyframes levitate-shadow {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(0.87);
+    opacity: 0.85;
+    filter: blur(7px);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.16);
+    opacity: 0.38;
+    filter: blur(13px);
+  }
+}
+
+.identity-stage:has(.is-sharing) .ground-shadow,
+.identity-stage:has(.is-pressed) .ground-shadow {
+  animation-play-state: paused;
+}
+
+@media (min-width: 1500px) {
+  .float-anchor {
+    width: 360px;
+    height: 405px;
+  }
+}
+
+@media (max-width: 1050px) {
+  .float-anchor {
+    width: 290px;
+    height: 350px;
+  }
+  .identity-stage {
+    min-height: 470px;
+  }
+}
+
+@media (max-width: 760px) {
+  .float-anchor {
+    width: 270px;
+    height: 320px;
+  }
+  .identity-stage {
+    min-height: 410px;
+    margin-bottom: 12px;
+  }
+  .ground-shadow {
+    width: 220px;
+    height: 35px;
+    bottom: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-rig {
+    animation: none;
+    transform: rotateY(-8deg);
+  }
+  .ground-shadow {
+    animation: none;
+  }
+  .float-rig .identity-stack,
+  .float-rig .identity-stack.is-open,
+  .float-rig .identity-stack.is-pressed:not(.is-turning),
+  .float-rig .identity-stack.is-turning {
+    transform: rotateX(var(--turn-x, 0deg)) rotateY(var(--turn-y, 0deg));
+    transition: none;
+  }
+}
+
+/* Zero-size probes measure the true projected coordinates of each face. */
+
+.surface-probe {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.probe-1 {
+  left: 0;
+  top: 0;
+}
+
+.probe-2 {
+  left: 100%;
+  top: 0;
+}
+
+.probe-3 {
+  left: 100%;
+  top: 100%;
+}
+
+.probe-4 {
+  left: 0;
+  top: 100%;
+}
+
+/* Registered custom property for smooth conic-gradient orbital ring drawing. */
+
+@property --orbit-draw {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 360deg;
+}
+
+/* Post-landing orbital ring draw from random start angle + directional rolling, centered around the card. */
+
+.orbit-front,
+.identity-stage .orbital-one {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 460px;
+  height: 330px;
+  border-radius: 50%;
+  border: 1px solid #ffffff38;
+  pointer-events: none;
+  opacity: 0;
+  --orbit-draw: 0deg;
+  transform: translate(-50%, -50%) rotate(-24deg) rotateX(28deg) rotateZ(0deg);
+  -webkit-mask-image: conic-gradient(
+    from var(--orbit-start-1, 0deg),
+    #000 0deg,
+    #000 var(--orbit-draw),
+    transparent calc(var(--orbit-draw) + 1deg)
+  );
+  mask-image: conic-gradient(
+    from var(--orbit-start-1, 0deg),
+    #000 0deg,
+    #000 var(--orbit-draw),
+    transparent calc(var(--orbit-draw) + 1deg)
+  );
+}
+
+.identity-stage .orbital-one {
+  clip-path: inset(-12% -12% 48% -12%);
+  z-index: 0;
+  animation:
+    orbit-draw-ring 0.82s cubic-bezier(0.22, 1, 0.36, 1) 1.48s forwards,
+    orbit-roll-one 16s ease-in-out 2.3s infinite alternate !important;
+}
+
+.orbit-front {
+  clip-path: inset(52% -12% -12% -12%);
+  z-index: 4;
+  box-shadow: 0 1px 0 #ffffff12;
+  animation:
+    orbit-draw-ring 0.82s cubic-bezier(0.22, 1, 0.36, 1) 1.48s forwards,
+    orbit-roll-one 16s ease-in-out 2.3s infinite alternate !important;
+}
+
+.identity-stage:has(.is-sharing) .orbit-front {
+  z-index: 1;
+}
+
+.identity-stage .orbital-two {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 470px;
+  height: 470px;
+  border-radius: 50%;
+  border: 1px dashed #cfd8ef48;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  --orbit-draw: 0deg;
+  transform: translate(-50%, -50%) rotate(45deg) scaleY(0.87) rotateZ(0deg);
+  -webkit-mask-image: conic-gradient(
+    from var(--orbit-start-2, 120deg),
+    #000 0deg,
+    #000 var(--orbit-draw),
+    transparent calc(var(--orbit-draw) + 1deg)
+  );
+  mask-image: conic-gradient(
+    from var(--orbit-start-2, 120deg),
+    #000 0deg,
+    #000 var(--orbit-draw),
+    transparent calc(var(--orbit-draw) + 1deg)
+  );
+  animation:
+    orbit-draw-ring-two 0.92s cubic-bezier(0.22, 1, 0.36, 1) 1.6s forwards,
+    orbit-roll-two 24s linear 2.52s infinite !important;
+}
+
+:root[data-theme="light"] .orbit-front,
+:root[data-theme="light"] .identity-stage .orbital-one {
+  border-color: #262b3830;
+}
+
+:root[data-theme="light"] .identity-stage .orbital-two {
+  border-color: #262b3826;
+}
+
+@keyframes orbit-draw-ring {
+  0% {
+    --orbit-draw: 0deg;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    --orbit-draw: 360deg;
+    opacity: 1;
+  }
+}
+
+@keyframes orbit-draw-ring-two {
+  0% {
+    --orbit-draw: 0deg;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.68;
+  }
+  100% {
+    --orbit-draw: 360deg;
+    opacity: 0.68;
+  }
+}
+
+@keyframes orbit-roll-one {
+  0% {
+    transform: translate(-50%, -50%) rotate(-24deg) rotateX(28deg) rotateZ(0deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(-12deg) rotateX(44deg)
+      rotateZ(180deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(-24deg) rotateX(28deg)
+      rotateZ(360deg);
+  }
+}
+
+@keyframes orbit-roll-two {
+  from {
+    transform: translate(-50%, -50%) rotate(45deg) scaleY(0.87) rotateZ(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(45deg) scaleY(0.87) rotateZ(-360deg);
+  }
+}
+
+/* Dual-layer energy aura: blooms on card landing, drifts with depth, and pulses on flip. */
+
+.identity-stage .motion-aura {
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 560px;
+  height: 550px;
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.32);
+  background:
+    radial-gradient(
+      circle at 46% 44%,
+      #e8f0ff52 0%,
+      #b8ccf52e 26%,
+      #8ea8e814 48%,
+      transparent 70%
+    ),
+    conic-gradient(
+      from 40deg at 50% 50%,
+      transparent 0deg,
+      #c5d4f724 90deg,
+      transparent 180deg,
+      #d8c8f51f 270deg,
+      transparent 360deg
+    );
+  filter: blur(26px);
+  opacity: 0;
+  animation:
+    aura-bloom 0.88s cubic-bezier(0.18, 0.88, 0.26, 1.06) 1.46s forwards,
+    aura-drift 10s ease-in-out 2.34s infinite alternate !important;
+}
+
+.identity-stage .motion-aura:before {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #ffffff36 0%,
+    #cfdcf718 45%,
+    transparent 72%
+  );
+  filter: blur(14px);
+  transition:
+    transform 0.52s cubic-bezier(0.2, 0.85, 0.24, 1),
+    opacity 0.52s;
+}
+
+.identity-stage.is-turning-stage .motion-aura:before {
+  transform: scale(1.24);
+  opacity: 1;
+}
+
+:root[data-theme="light"] .identity-stage .motion-aura {
+  background:
+    radial-gradient(
+      circle at 46% 44%,
+      #ffffff 0%,
+      #e2e8f5b8 32%,
+      #b8c4dc38 55%,
+      transparent 74%
+    ),
+    conic-gradient(
+      from 40deg at 50% 50%,
+      transparent 0deg,
+      #9aa8c726 110deg,
+      transparent 210deg,
+      #b8c3db24 300deg,
+      transparent 360deg
+    );
+}
+
+:root[data-theme="light"] .identity-stage .motion-aura:before {
+  background: radial-gradient(
+    circle,
+    #ffffff 0%,
+    #d5deef55 50%,
+    transparent 75%
+  );
+}
+
+@keyframes aura-bloom {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.32);
+    filter: blur(36px);
+  }
+  68% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+    filter: blur(22px);
+  }
+  100% {
+    opacity: 0.92;
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(26px);
+  }
+}
+
+@keyframes aura-drift {
+  0% {
+    opacity: 0.82;
+    transform: translate(calc(-50% - 14px), calc(-50% + 10px)) scale(0.96)
+      rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + 16px), calc(-50% - 12px)) scale(1.08)
+      rotate(12deg);
+  }
+}

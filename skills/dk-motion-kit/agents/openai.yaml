@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dk Motion Kit"
+  short_description: "Reuse Vue 3D cards, SVG icons and coordinated motion"
+  default_prompt: "Use $dk-motion-kit to add reusable motion and icons while preserving my existing design."

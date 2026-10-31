@@ -1,0 +1,35 @@
+{
+  "viewBox": "0 0 24 24",
+  "strokeWidth": 1.5,
+  "icons": [
+    "check",
+    "download",
+    "arrow",
+    "sun",
+    "moon",
+    "share",
+    "copy",
+    "close",
+    "mail",
+    "globe",
+    "qr",
+    "qq",
+    "github",
+    "x",
+    "instagram",
+    "douyin",
+    "feishu",
+    "telegram",
+    "wechat"
+  ],
+  "brandIcons": [
+    "qq",
+    "github",
+    "x",
+    "instagram",
+    "douyin",
+    "feishu",
+    "telegram",
+    "wechat"
+  ]
+}
