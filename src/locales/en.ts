@@ -1,5 +1,6 @@
 import zh from "./zh";
 const messages = {
+confirmVisit: "Confirm to open this platform, or copy the account below.",
   flipHints: {
     top: "Flip from the top",
     bottom: "Flip from the bottom",

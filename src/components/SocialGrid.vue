@@ -148,14 +148,12 @@ onBeforeUnmount(() => {
           :aria-label="`${t.viewQr} ${text(card.name)}`"
         >
           <Icon name="qr" /></button
-        ><a
+        ><button
           v-if="card.url"
           class="card-link"
-          :href="card.url"
-          :target="card.url.startsWith('http') ? '_blank' : undefined"
-          rel="noopener noreferrer"
-          :aria-label="`${t.visit} ${text(card.name)}`"
-          ><Icon name="arrow" /></a
+          @click="$emit('open', card)"
+          :aria-label="`${t.details} ${text(card.name)}`"
+          ><Icon name="arrow" /></button
         ><button
           v-else
           class="card-link"

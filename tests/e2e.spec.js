@@ -316,3 +316,12 @@ test('poster code and Telegram original load only when requested', async ({ page
   await page.locator('.poster-button').click();await expect(page.locator('.poster-preview img')).toBeVisible();
   expect(requests.some(url=>/\/poster[-.]/.test(url))).toBe(true);
 });
+
+test('social destination requires confirmation and outside click dismisses it', async ({ page }) => {
+ await page.goto('/');await settled(page);await page.mouse.wheel(0,120);
+ const original=page.url();await page.locator('.social-card').first().locator('.card-link').click();
+ await expect(page.getByRole('dialog')).toBeVisible();expect(page.url()).toBe(original);
+ await expect(page.locator('.contact-confirm')).toHaveAttribute('href','https://github.com/Han-B1ng');
+ await page.locator('.modal-backdrop').click({position:{x:5,y:5}});
+ await expect(page.getByRole('dialog')).not.toBeVisible();
+});

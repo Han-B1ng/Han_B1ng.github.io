@@ -25,7 +25,7 @@ defineEmits<{ copy: [value: string]; poster: []; qrError: [] }>();
     {{ shareOpen ? t.share : selected ? text(selected.name) : "" }}
   </h2>
   <p class="modal-description">
-    {{ shareOpen ? t.scan : selected?.account ? t.manual : t.unsetBody }}
+    {{ shareOpen ? t.scan : selected?.url ? t.confirmVisit : selected?.account ? t.manual : t.unsetBody }}
   </p>
   <div
     v-if="qrData && !qrFailed"
@@ -41,6 +41,7 @@ defineEmits<{ copy: [value: string]; poster: []; qrError: [] }>();
   <div v-else-if="!shareOpen && !selected?.account" class="empty-contact">
     <Icon :name="selected?.icon || 'globe'" /><span>{{ t.unset }}</span>
   </div>
+  <a v-if="!shareOpen && selected?.url" class="primary-button contact-confirm" :href="selected.url" :target="selected.url.startsWith('http') ? '_blank' : undefined" rel="noopener noreferrer">{{ t.visit }} {{ text(selected.name) }}<Icon name="arrow" /></a>
   <p v-if="qrFailed && shareOpen" class="modal-description">{{ t.qrFail }}</p>
   <p v-if="shareOpen || selected?.account" class="account-line">
     {{ shareOpen ? shareUrl : selected?.account }}

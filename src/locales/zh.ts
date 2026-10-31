@@ -1,4 +1,5 @@
 const messages = {
+confirmVisit: "确认后打开该平台，也可以复制下方账号。",
   flipHints: {
     top: "点击翻转上沿",
     bottom: "点击翻转下沿",
