@@ -2,12 +2,14 @@
 
 MIT 开源的 Vue 3 + TypeScript 动效 starter、19 个 SVG 图标，以及自包含 Codex skill。从 [Dk Connect](https://github.com/Han-B1ng/Han_B1ng.github.io) 的迭代中整理；示例不含原站个人头像、联系方式或二维码。
 
+发布位置：现有公开仓库的独立 `assets/dk-motion-kit` 分支；与个人站主分支隔离。
+
 ## 直接运行 / Quick start
 
 需要 Node.js 22.13+、npm、Python 3（生成 starter 时）。
 
 ```sh
-git clone https://github.com/Han-B1ng/dk-motion-kit.git
+git clone --branch assets/dk-motion-kit --single-branch https://github.com/Han-B1ng/Han_B1ng.github.io.git dk-motion-kit
 cd dk-motion-kit
 npm ci
 npm run dev
