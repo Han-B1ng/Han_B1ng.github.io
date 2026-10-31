@@ -1,0 +1,46 @@
+# V1 P0–P2 maintenance
+
+Baseline: `v1-final`. Work branch: `maintenance/v1-quality`.
+
+## Implemented
+
+- Production Pages base is `/`; README now documents hanb1ng.com and the current physical card interaction.
+- Added favicon, canonical/OG/Twitter metadata, 1200×630 PNG and a repeatable local rendering script.
+- Avatar has a static loading surface and initials on network failure. QR loading/failure behavior remains available.
+- Empty social entries expose a disabled control instead of an empty dialog.
+- Clipboard denial also attempts the legacy fallback and restores focus. The deprecated fallback is intentionally documented.
+- Extracted SocialGrid, SharePanel, AvatarImage, preference composable and translation module. The card's interconnected entrance/flip/pressure logic remains together for this maintenance phase.
+- Split CSS into ordered base/card/entrance files and formatted source for review. Removed hidden decorations, unused shadow writes and duplicate poster raster draws.
+- Named effect cleanup, a shared reduced-motion media query, runtime change handling, and guaranteed header completion when entry is interrupted by reduced motion.
+- Enabled noUnusedLocals, noUnusedParameters and noFallthroughCasesInSwitch.
+- Added geometry and browser regression suites plus a GitHub check workflow.
+
+## Verification
+
+Local Node 22: `npm test` (4 tests), `npm run build` (TypeScript + Vite), `npm run test:e2e` (5 scenarios with installed Google Chrome).
+
+Browser scenarios cover reload/continuous turns and pressure, avatar failure, clipboard fallback, QR/poster, dialog focus, saved language/theme, runtime reduced motion, empty contact configuration, and English long-account layout at 390/760/820/1051/1180/1280 CSS px. No horizontal overflow was found, so grid columns were retained. Page, poster and OG image were visually inspected.
+
+## Boundaries
+
+No P3 visual redesign. No deletion of local work snapshots. `.idea` and `dist` are ignored and untracked; no index cleanup was necessary. GitHub Actions and the public domain have not been validated for this branch; merging main and checking its deployment remain separate steps. Social crawlers may need to refresh cached previews after deployment.
+
+## Desktop discovery interaction follow-up
+
+Desktop social cards are initially transparent and inert until the first downward wheel input. Native downward scrolling (keyboard, anchors and restored positions) also opens the grid. Rows/columns receive a short stagger calculated from the actual grid, and cards reverse back to their hidden state after a 180ms dwell at the very top. Dialog wheel and browser pinch/zoom wheel events do not trigger the grid. Mobile keeps viewport fades; reduced motion shows content directly. Hero, card, orbit and compact-header sizes adapt to viewport height, preserving the card aspect ratio. Startup beam uses two mirrored 1.1-second passes, with the same brightness/speed profile outbound and returning.
+
+The startup beam hands off from its actual screen rectangle to the scroll indicator in 130ms when interrupted. Returning to the top does not replay startup, but resets the desktop grid after a short dwell; another downward wheel opens it again. CSS transitions preserve intermediate positions if the direction changes during a retreat. Mobile and reduced-motion modes skip this desktop reset behavior.
+
+## Page decomposition
+
+The page now composes TopBar, HeroSection, IdentityCard, SocialGrid, ShareDialog and SiteFooter. AvatarImage and SharePanel remain small supporting views. App.vue is the composition layer; usePageModel wires shared state and lifecycle. Card pressure/turning, entrance timing, header beam handoff, language fades and sharing each have dedicated composables. Timers and animation handles stay in their owning composable.
+
+Messages live in src/locales/zh.ts and en.ts; src/i18n.ts exports the typed dictionaries. English keys and nested flip hints are checked against Chinese keys. Header identities, section labels and scroll/flip hints use the same dictionaries; personal bilingual profile data still lives only in config.ts. This refactor is for maintenance and does not introduce a new animation design.
+
+## Lightweight production performance pass
+
+- Decorative infinite loops pause when the hero leaves the viewport (80px buffer) or the tab becomes hidden. Finite entrance reveals are not paused by this rule. Hover/pressed CSS pause states remain effective after resuming.
+- Pointer-light RAF stops when the card is offscreen or the document is hidden.
+- Poster drawing code is dynamically imported only on export. Telegram's original QR was already requested only inside its dialog; it remains untouched to preserve scan quality.
+- Production regression uses `E2E_PREVIEW=1 npm run test:e2e` after a build; it starts Vite preview rather than the development server. The one test that rewrites source configuration runs only in the development suite.
+- This pass targets idle animation work, not a claimed network speedup. Production main JS is approximately 146KB / 56KB gzip, with the poster module about 2.3KB / 1.4KB gzip loaded on demand. Actual public-domain latency and cache behavior still need deployment verification.

@@ -1,0 +1,57 @@
+/* Hide the visual scrollbar while retaining native scroll interaction. */
+html { scrollbar-width:none; scroll-padding-top:96px; }
+html::-webkit-scrollbar { display:none; }
+.topbar-space { height:112px; }
+.topbar {
+  position:fixed; top:0; left:0; right:0; z-index:8;
+  width:100%; margin:0; padding-inline:max(56px,calc((100% - 1180px)/2));
+  transition:height .22s ease,background .22s ease,box-shadow .22s ease;
+}
+.topbar.is-scrolled { height:76px; background:var(--bg); box-shadow:0 12px 28px var(--shadow); }
+.header-track { position:absolute; top:0; left:0; right:0; height:2px; overflow:hidden; opacity:0; transition:opacity .2s; pointer-events:none; }
+.header-track.is-active,.header-track.is-handoff { opacity:1; }
+.header-glow {
+  opacity:0;
+  position:absolute; top:0; height:2px; width:clamp(80px,12vw,180px);
+  left:calc(var(--scroll-progress,0) * 100%);
+  transform:translateX(calc(var(--scroll-progress,0) * -100%));
+  background:linear-gradient(90deg,transparent,var(--muted) 24%,var(--text) 65%,transparent);
+  transition:left .12s linear,transform .12s linear;
+}
+@media(max-width:1050px){.topbar{padding-inline:32px}}
+@media(max-width:760px){.topbar-space{height:87px}.topbar{padding-inline:20px}.topbar.is-scrolled{height:68px}}
+@media(prefers-reduced-motion:reduce){.topbar,.header-track,.header-glow{transition:none}}
+
+/* A mirrored round trip starts with aura bloom; a bright core stretches through the center. */
+.header-track.is-starting{opacity:1;height:4px}
+.header-track.is-starting .header-glow{opacity:0}
+.startup-glow{position:absolute;top:0;height:3px;width:clamp(180px,26vw,360px);background:linear-gradient(90deg,transparent,var(--muted) 24%,var(--text) 50%,var(--muted) 76%,transparent);animation:startup-sweep 1.1s cubic-bezier(.65,0,.35,1) 2 alternate both}
+@keyframes startup-sweep{
+  0%{left:0;transform:translateX(-100%) scaleX(.55);opacity:0}
+  20%{opacity:.18}
+  50%{transform:translateX(-50%) scaleX(1.15);opacity:1}
+  80%{opacity:.18}
+  100%{left:100%;transform:translateX(0) scaleX(.55);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){.startup-glow{display:none;animation:none}}
+
+/* Full-bleed hairline, with the chapter marker aligned to the page content. */
+.connections{border-top:0;padding-top:0}
+.section-bar{position:relative;width:100vw;margin-left:calc(50% - 50vw);margin-bottom:20px;background:transparent;border-top:1px solid var(--line)}
+.section-bar-inner{width:min(1180px,calc(100% - 112px));margin-inline:auto;padding-top:18px;display:flex;align-items:center;gap:9px;min-height:36px}
+.section-index{color:var(--faint);font:9px/1.5 monospace;letter-spacing:.08em}
+.section-bar-title{color:var(--muted);font-size:10px;letter-spacing:.08em}
+.section-bar.is-entering{opacity:var(--section-reveal,0);transform:translateY(calc((1 - var(--section-reveal,0)) * 16px))}
+.brand-sub{min-height:10px;display:grid;align-items:center;min-width:175px}
+.brand-sub>span{grid-area:1/1}
+.header-identity-enter-active,.header-identity-leave-active{transition:opacity .16s,transform .16s}
+.header-identity-enter-from{opacity:0;transform:translateY(6px)}
+.header-identity-leave-to{opacity:0;transform:translateY(-6px)}
+@media(max-width:1050px){.section-bar-inner{width:calc(100% - 64px)}}
+@media(max-width:760px){.section-bar{margin-bottom:16px}.section-bar-inner{width:min(510px,calc(100% - 40px));padding-top:14px;min-height:30px}.brand-sub{min-width:128px;font-size:6px;letter-spacing:.08em}}
+@media(prefers-reduced-motion:reduce){.section-bar.is-entering{opacity:1;transform:none}.header-identity-enter-active,.header-identity-leave-active{transition:none}}
+@media(max-width:360px){.brand-sub{min-width:100px}.toolbar{gap:4px}.brand{gap:7px}}
+
+/* The idle progress beam must remain hidden while the startup track fades out. */
+.header-track.is-active:not(.is-starting):not(.is-handoff) .header-glow{opacity:1}
+.header-track.is-handoff .header-glow{transition:none}
