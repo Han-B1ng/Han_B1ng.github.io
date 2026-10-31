@@ -24,6 +24,29 @@ const localPreview = ['localhost', '127.0.0.1', '[::1]'].includes(new URL(shareU
 const modal = ref<HTMLElement>()
 const identity = ref<HTMLElement>()
 const stack = ref<HTMLElement>()
+const pressure = ref<HTMLElement>()
+const entryTravel = ref<HTMLElement>()
+const heroCopy = ref<HTMLElement>()
+const topbar = ref<HTMLElement>()
+let textRevealStart: number | undefined
+function revealPassedText(progress: number) {
+  const copy = heroCopy.value
+  const plane = pressure.value
+  if (!copy || !plane) return
+  const textRect = copy.getBoundingClientRect()
+  const cardRect = plane.getBoundingClientRect()
+  const desktop = window.innerWidth > 760
+  const visible = Math.max(0, Math.min(textRect.width, cardRect.left - textRect.left - 50))
+  copy.style.setProperty('--copy-revealed', `${visible}px`)
+  if (textRevealStart === undefined && (desktop ? visible > 0 : progress >= .2)) textRevealStart = progress
+  const start = textRevealStart ?? 1
+  for (const [selector, delay] of [['.copy-wipe', 0], ['.copy-fade', .24]] as const) {
+    copy.querySelectorAll<HTMLElement>(selector).forEach((line, index) => {
+      const t = Math.max(0, Math.min(1, (progress - start - delay - index * .035) / .17))
+      line.style.setProperty('--passed-alpha', `${t * t * (3 - 2 * t)}`)
+    })
+  }
+}
 const stackOpen = ref(false)
 const stackUsed = ref(false)
 const stackPressed = ref(false)
@@ -33,9 +56,10 @@ const turning = ref(false)
 const hoverZone = ref<CardZone>('right')
 const coreLayers = [-2.4, -1.2, 0, 1.2, 2.4]
 const entering = ref(true)
+const entranceReady = ref(false)
+let entranceStartFrame = 0
 const orbitStartOne = ref(`${Math.floor(Math.random() * 360)}deg`)
 const orbitStartTwo = ref(`${Math.floor(Math.random() * 360)}deg`)
-let entranceTimer: ReturnType<typeof setTimeout> | undefined
 let flipTimer: ReturnType<typeof setTimeout> | undefined
 const flipHint = computed(() => {
   const hints = language.value === 'zh'
@@ -48,6 +72,20 @@ function cardZone(clientX: number, clientY: number): CardZone {
   if (!rect) return 'right'
   const x = (clientX - rect.left) / rect.width, y = (clientY - rect.top) / rect.height
   return getCardZone(x, y)
+}
+function finishEntrance() {
+  if (!entering.value) return
+  // Keep the completed revolution as the interaction baseline, avoiding a reverse unwind.
+  turnX.value = 0
+  turnY.value = 360
+  stackOpen.value = false
+  entering.value = false
+  if (mouseInside && pointerPosition) {
+    stackPressed.value = true
+    hoverZone.value = cardZone(pointerPosition.x, pointerPosition.y)
+    applyPointerTilt(pointerPosition.x, pointerPosition.y)
+    if (!lightFrame) lightFrame = requestAnimationFrame(updateSurfaceLights)
+  }
 }
 function resetCard() {
   clearTimeout(flipTimer)
@@ -92,8 +130,8 @@ function applyPointerTilt(clientX: number, clientY: number) {
   stack.value?.style.setProperty('--light-y', `${y * 100}%`)
   stack.value?.style.setProperty('--shadow-x', `${(0.5 - x) * 28}px`)
   stack.value?.style.setProperty('--shadow-y', `${26 + (1 - y) * 18}px`)
-  stack.value?.style.setProperty('--rx', `${Math.max(-13, Math.min(13, (0.5 - y) * 24))}deg`)
-  stack.value?.style.setProperty('--ry', `${Math.max(-15, Math.min(15, (x - 0.5) * 28))}deg`)
+  pressure.value?.style.setProperty('--rx', `${Math.max(-13, Math.min(13, (0.5 - y) * 24))}deg`)
+  pressure.value?.style.setProperty('--ry', `${Math.max(-15, Math.min(15, (x - 0.5) * 28))}deg`)
 }
 function moveStack(event: PointerEvent) {
   if (event.pointerType !== 'mouse') return
@@ -102,7 +140,7 @@ function moveStack(event: PointerEvent) {
   if (entering.value) return
   if (!lightFrame) lightFrame = requestAnimationFrame(updateSurfaceLights)
   hoverZone.value = cardZone(event.clientX, event.clientY)
-  if (!turning.value) applyPointerTilt(event.clientX, event.clientY)
+  applyPointerTilt(event.clientX, event.clientY)
 }
 function enterStack(event: PointerEvent) {
   if (event.pointerType !== 'mouse') return
@@ -135,7 +173,6 @@ function activateStack(event: MouseEvent | KeyboardEvent) {
   rippleKey.value++
   stackUsed.value = true
   turning.value = true
-  resetTilt()
   // In rotateX(turnX) rotateY(turnY), rotateY rotates around the X-rotated local Y-axis.
   // When turnX is an odd multiple of 180deg, the local Y-axis points downward in screen space,
   // so we invert the Y delta to keep left/right flips aligned with screen direction.
@@ -180,6 +217,49 @@ function saveSettings() {
   try { localStorage.setItem('dk-preferences', JSON.stringify({ theme: theme.value, language: language.value })) } catch { /* Settings are optional on restricted browsers. */ }
 }
 watch([theme, language], saveSettings)
+function startEntrance() {
+  cancelAnimationFrame(entranceStartFrame)
+  let started: number | undefined
+  const frame = (now: number) => {
+    const anchor = stack.value?.closest('.float-anchor') as HTMLElement | null
+    const travel = entryTravel.value
+    if (!anchor || !travel || !stack.value || !entering.value) return
+    started ??= now
+    const progress = Math.min(1, (now - started) / 1400)
+    // Read the stationary anchor, never the already-transformed card. Recompute on
+    // every frame so window resizing, zoom and layout changes use current bounds.
+    const rect = anchor.getBoundingClientRect()
+    const viewport = window.visualViewport
+    const viewportLeft = viewport?.offsetLeft ?? 0
+    const start = viewportLeft - rect.right - rect.width * .5
+    // One continuous flight curve: the screen center is a pass-through point.
+    const flight = Math.min(1, progress / .55)
+    const distance = flight * flight
+    const x = start * (1 - distance)
+    // Start turning as the leading edge enters the viewport, rather than at its center.
+    const appearanceOffset = viewportLeft - rect.right + rect.width * .08
+    const appearanceDistance = Math.max(0, Math.min(1, 1 - appearanceOffset / start))
+    const flipStart = .55 * Math.sqrt(appearanceDistance)
+    const angle = progress < flipStart ? 0 : progress < .55
+      ? 180 * ((progress - flipStart) / (.55 - flipStart))
+      : progress < .75 ? 180 : 180 + 180 * Math.pow(Math.min(1, (progress - .75) / .25), 2)
+    travel.style.setProperty('--entry-offset', `${x}px`)
+    travel.style.setProperty('--entry-rise', '0px')
+    travel.style.setProperty('--entry-roll', '0deg')
+    stack.value.style.setProperty('--entry-angle', `${angle}deg`)
+    revealPassedText(progress)
+    const headerT = Math.max(0, Math.min(1, (progress - .72) / .28))
+    const headerEase = headerT * headerT * headerT
+    if (topbar.value) {
+      topbar.value.style.transform = `translateY(${-38 * (1 - headerEase)}px)`
+      topbar.value.style.opacity = `${Math.min(1, headerT * 2)}`
+    }
+    entranceReady.value = true
+    if (progress < 1 && !reducedMotion()) entranceStartFrame = requestAnimationFrame(frame)
+    else finishEntrance()
+  }
+  entranceStartFrame = requestAnimationFrame(frame)
+}
 onMounted(() => {
   try {
     const saved = JSON.parse(localStorage.getItem('dk-preferences') || '{}')
@@ -193,15 +273,8 @@ onMounted(() => {
   if (reducedMotion()) {
     entering.value = false
   } else {
-    entranceTimer = setTimeout(() => {
-      entering.value = false
-      if (mouseInside && pointerPosition) {
-        stackPressed.value = true
-        hoverZone.value = cardZone(pointerPosition.x, pointerPosition.y)
-        applyPointerTilt(pointerPosition.x, pointerPosition.y)
-        if (!lightFrame) lightFrame = requestAnimationFrame(updateSurfaceLights)
-      }
-    }, 1620)
+    if (document.readyState === 'complete') startEntrance()
+    else window.addEventListener('load', startEntrance, { once: true })
   }
   if ('IntersectionObserver' in window && !reducedMotion()) {
     scrollObserver = new IntersectionObserver(entries => {
@@ -210,7 +283,7 @@ onMounted(() => {
     document.querySelectorAll('.social-card, .share-strip').forEach(el => { el.classList.add('scroll-enter'); scrollObserver?.observe(el) })
   }
 })
-onBeforeUnmount(() => { cancelAnimationFrame(lightFrame); clearTimeout(timer); clearTimeout(entranceTimer); clearTimeout(flipTimer); clearTimeout(hoverTimer); clearTimeout(copyTimer); scrollObserver?.disconnect(); clearPoster(); window.removeEventListener('pointerdown', outsideStack); window.removeEventListener('keydown', keydown); document.body.style.overflow = '' })
+onBeforeUnmount(() => { window.removeEventListener('load', startEntrance); cancelAnimationFrame(entranceStartFrame); cancelAnimationFrame(lightFrame); clearTimeout(timer); clearTimeout(flipTimer); clearTimeout(hoverTimer); clearTimeout(copyTimer); scrollObserver?.disconnect(); clearPoster(); window.removeEventListener('pointerdown', outsideStack); window.removeEventListener('keydown', keydown); document.body.style.overflow = '' })
 watch(modalOpen, async open => {
   document.body.style.overflow = open ? 'hidden' : ''
   if (open) { previousFocus = document.activeElement as HTMLElement; await nextTick(); modal.value?.querySelector<HTMLButtonElement>('button')?.focus() }
@@ -253,7 +326,7 @@ async function share() {
   await showShare()
 }
 function close() { selected.value = null; shareOpen.value = false; qrData.value = '' }
-function resetTilt() { stack.value?.style.setProperty('--rx', '0deg'); stack.value?.style.setProperty('--ry', '0deg'); stack.value?.style.setProperty('--light-x', '40%'); stack.value?.style.setProperty('--light-y', '20%') }
+function resetTilt() { pressure.value?.style.setProperty('--rx', '0deg'); pressure.value?.style.setProperty('--ry', '0deg'); stack.value?.style.setProperty('--light-x', '40%'); stack.value?.style.setProperty('--light-y', '20%') }
 const year = new Date().getFullYear()
 const copiedValue = ref('')
 let copyTimer: ReturnType<typeof setTimeout> | undefined
@@ -311,9 +384,8 @@ async function makePoster() {
 <template>
   <div class="page-shell" id="top">
     <div class="atmosphere" aria-hidden="true"></div>
-    <div class="grain" aria-hidden="true"></div>
     <div class="layout">
-      <header class="topbar topbar-drop">
+      <header class="topbar topbar-drop" ref="topbar">
         <a class="brand" href="#top" :aria-label="t.home"><span class="brand-mark">h<span>.</span></span><span>{{ config.name }}<span class="brand-sub">PERSONAL SPACE</span></span></a>
         <div class="toolbar">
           <button class="language-button" @click="language = language === 'zh' ? 'en' : 'zh'" :aria-label="t.language"><span :class="{ active: language === 'zh' }">中</span><span class="slash">/</span><span :class="{ active: language === 'en' }">EN</span></button>
@@ -324,7 +396,7 @@ async function makePoster() {
       </header>
       <main>
         <section class="hero" aria-labelledby="hero-title">
-          <div class="hero-copy">
+          <div class="hero-copy" ref="heroCopy" :class="{ 'is-revealing': entering }">
             <div class="availability copy-fade" style="--fade-delay:920ms"><span class="status-dot"></span>{{ text(config.availability) }}</div>
             <p class="hello copy-wipe" style="--wipe-delay:200ms">{{ t.hello }}<span class="hello-line"></span></p>
             <h1 id="hero-title" class="copy-wipe" style="--wipe-delay:280ms">{{ config.name }}<span class="title-period">.</span></h1>
@@ -333,10 +405,10 @@ async function makePoster() {
             <a class="primary-button copy-fade" style="--fade-delay:1060ms" href="#connections">{{ t.contact }}<Icon name="arrow" /></a>
             <div class="hero-meta copy-fade" style="--fade-delay:1140ms"><template v-if="text(config.location)"><Icon name="globe" /><span>{{ text(config.location) }}</span><span class="meta-dot">·</span></template><span>{{ config.handle }}</span></div>
           </div>
-          <div class="identity-stage" :class="{ 'is-entering': entering, 'is-turning-stage': turning }" :style="{ '--orbit-start-1': orbitStartOne, '--orbit-start-2': orbitStartTwo }">
+          <div class="identity-stage" :class="{ 'is-entering': entering, 'is-entry-ready': entranceReady, 'is-turning-stage': turning }" :style="{ '--orbit-start-1': orbitStartOne, '--orbit-start-2': orbitStartTwo }">
             <div class="orbital orbital-one" aria-hidden="true"></div><div class="orbital orbital-two" aria-hidden="true"></div><div class="motion-aura" aria-hidden="true"></div><div class="motion-sparks" aria-hidden="true"><i v-for="n in 6" :key="n"></i></div>
             <div class="ground-shadow stage-ambient" aria-hidden="true"></div><div class="orbit-front" aria-hidden="true"></div><span class="stage-coordinate coordinate-top stage-ambient" aria-hidden="true">PERSONAL IDENTITY — 001</span>
-            <div class="float-anchor" @click="activateStack" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack"><div class="float-rig" :class="{ 'is-sharing': stackOpen, 'is-pressed': stackPressed, 'is-entering': entering }"><div class="identity-stack" ref="stack" :style="{ '--turn-x': `${turnX}deg`, '--turn-y': `${turnY}deg` }" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl, 'is-pressed': stackPressed, 'is-turning': turning, 'is-entering': entering }" role="button" tabindex="0" :aria-label="t.revealShare" :aria-expanded="stackOpen" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)" @keydown.up.prevent="activateStack($event)" @keydown.down.prevent="activateStack($event)" @keydown.left.prevent="activateStack($event)" @keydown.right.prevent="activateStack($event)">
+            <div class="float-anchor" @click="activateStack" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack"><div class="card-entry-travel" ref="entryTravel" :class="{ 'is-entering': entering }"><div class="float-rig" :class="{ 'is-sharing': stackOpen, 'is-pressed': stackPressed, 'is-entering': entering }"><div class="card-pressure" ref="pressure"><div class="identity-stack" ref="stack" :style="{ '--turn-x': `${turnX}deg`, '--turn-y': `${turnY}deg` }" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl, 'is-pressed': stackPressed, 'is-turning': turning, 'is-entering': entering }" role="button" tabindex="0" :aria-label="t.revealShare" :aria-expanded="stackOpen" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)" @keydown.up.prevent="activateStack($event)" @keydown.down.prevent="activateStack($event)" @keydown.left.prevent="activateStack($event)" @keydown.right.prevent="activateStack($event)">
             <div v-for="z in coreLayers" :key="z" class="card-core-layer" :style="{ '--core-z': `${z}px` }" aria-hidden="true"></div>
             <div class="identity-card identity-front" ref="identity" :aria-hidden="stackOpen"><i v-for="n in 4" :key="n" class="surface-probe" :class="`probe-${n}`" aria-hidden="true"></i>
               <div class="card-sheen" aria-hidden="true"></div><div class="motion-glint" aria-hidden="true"></div>
@@ -353,7 +425,7 @@ async function makePoster() {
               <div class="identity-edge"><span>DK CONNECT</span><span><Icon name="arrow" /> {{ t.revealShare }}</span></div>
             </div><span v-if="copiedValue === shareUrl" class="motion-copy-burst" aria-hidden="true">✳</span>
             </div>
-            </div></div><span class="stage-coordinate coordinate-bottom stage-ambient" aria-hidden="true"><span class="tiny-cross">+</span> LESS DISTANCE. MORE CONNECTION.</span>
+            </div></div></div></div><span class="stage-coordinate coordinate-bottom stage-ambient" aria-hidden="true"><span class="tiny-cross">+</span> LESS DISTANCE. MORE CONNECTION.</span>
           </div>
         </section>
         <section class="connections reveal" id="connections" aria-labelledby="connections-title" style="--delay:1320ms">
