@@ -21,10 +21,10 @@ html::-webkit-scrollbar { display:none; }
 @media(max-width:760px){.topbar-space{height:87px}.topbar{padding-inline:20px}.topbar.is-scrolled{height:68px}}
 @media(prefers-reduced-motion:reduce){.topbar,.header-track,.header-glow{transition:none}}
 
-/* One pass starts with aura bloom; a bright core stretches through the center. */
+/* A mirrored round trip starts with aura bloom; a bright core stretches through the center. */
 .header-track.is-starting{opacity:1;height:4px}
 .header-track.is-starting .header-glow{opacity:0}
-.startup-glow{position:absolute;top:0;height:3px;width:clamp(180px,26vw,360px);background:linear-gradient(90deg,transparent,var(--muted) 24%,var(--text) 50%,var(--muted) 76%,transparent);animation:startup-sweep 1.4s cubic-bezier(.65,0,.35,1) both}
+.startup-glow{position:absolute;top:0;height:3px;width:clamp(180px,26vw,360px);background:linear-gradient(90deg,transparent,var(--muted) 24%,var(--text) 50%,var(--muted) 76%,transparent);animation:startup-sweep 1.1s cubic-bezier(.65,0,.35,1) 2 alternate both}
 @keyframes startup-sweep{
   0%{left:0;transform:translateX(-100%) scaleX(.55);opacity:0}
   20%{opacity:.18}

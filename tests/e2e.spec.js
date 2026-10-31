@@ -41,6 +41,7 @@ test("image failure, clipboard rejection fallback and accessible share export", 
   await page.goto("/");
   await settled(page);
   await expect(page.locator(".avatar-error")).toHaveCount(2);
+  await page.mouse.wheel(0, 100);
   await page.locator("#connections").scrollIntoViewIfNeeded();
   await page.locator(".card-copy").first().click();
   await expect(page.locator("[role=status]")).toContainText("已复制");
@@ -107,6 +108,7 @@ test("unconfigured platforms have no empty dialog action", async ({ page }) => {
   });
   await page.goto("/");
   await settled(page);
+  await page.mouse.wheel(0, 80);
   const first = page.locator(".social-card").first();
   await expect(first.locator(".social-status")).toHaveText("即将连接");
   await expect(first.locator(".card-link")).toBeDisabled();
@@ -168,8 +170,8 @@ test('full-width hairline aligns with content; sweep starts with aura', async ({
   await settled(page);
   await expect(page.locator('.startup-glow')).toBeVisible({timeout:5000});
   const sweep=await page.locator('.startup-glow').evaluate(e=>getComputedStyle(e).animationDuration);
-  expect(sweep).toBe('1.4s');
-  expect(await page.locator('.startup-glow').evaluate(e=>getComputedStyle(e).animationIterationCount)).toBe('1');
+  expect(sweep).toBe('1.1s');
+  expect(await page.locator('.startup-glow').evaluate(e=>getComputedStyle(e).animationIterationCount)).toBe('2');
   await expect(page.locator('.startup-glow')).toHaveCount(0);
   expect(await page.locator('.section-bar').evaluate(e=>e.getBoundingClientRect().width)).toBe(1280);
   const alignment = await page.evaluate(()=>({marker:document.querySelector('.section-bar-inner').getBoundingClientRect().left,title:document.querySelector('#connections-title').getBoundingClientRect().left}));
@@ -194,7 +196,7 @@ test('sweep shares aura start and has dim ends with a bright center', async ({ p
   const result=await page.evaluate(()=>{
     const element=document.querySelector('.startup-glow');
     const animation=element.getAnimations()[0]; animation.pause();
-    const samples=[140,700,1260].map(time=>{animation.currentTime=time;const style=getComputedStyle(element);return {opacity:Number(style.opacity),x:element.getBoundingClientRect().x}});
+    const samples=[110,550,990].map(time=>{animation.currentTime=time;const style=getComputedStyle(element);return {opacity:Number(style.opacity),x:element.getBoundingClientRect().x}});
     animation.play();return {samples,starts:window.motionStarts};
   });
   expect(Math.abs(result.starts['startup-sweep']-result.starts['aura-bloom'])).toBeLessThan(100);
@@ -202,4 +204,43 @@ test('sweep shares aura start and has dim ends with a bright center', async ({ p
   expect(result.samples[1].opacity).toBeGreaterThan(result.samples[2].opacity);
   expect(result.samples[0].x).toBeLessThan(result.samples[1].x);
   expect(result.samples[1].x).toBeLessThan(result.samples[2].x);
+});
+
+test('desktop first downward wheel reveals the entire grid across screen proportions', async ({ page }) => {
+  for(const [width,height] of [[1280,600],[1280,800],[1920,1080],[1600,1200]]) {
+    await page.setViewportSize({width,height});await page.goto('/');await settled(page);
+    const grid=page.locator('.social-grid');
+    await expect(grid).not.toHaveClass(/is-revealed/);
+    await expect(grid.locator('.social-card').first()).toHaveCSS('opacity','0');
+    await page.mouse.move(10,150);await page.mouse.wheel(0,-10);
+    await expect(grid).not.toHaveClass(/is-revealed/);
+    await page.mouse.wheel(0,24);
+    await expect(grid).toHaveClass(/is-revealed/);
+    await expect(grid.locator('.social-card').last()).toHaveCSS('opacity','1');
+    await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+    await expect(grid).toHaveClass(/is-revealed/);
+    const geometry=await page.evaluate(()=>{
+      const header=document.querySelector('header').getBoundingClientRect();
+      const card=document.querySelector('.float-anchor').getBoundingClientRect();
+      return {header:header.height,ratio:card.width/card.height,scrollWidth:document.documentElement.scrollWidth,width:innerWidth};
+    });
+    expect(geometry.header).toBeLessThanOrEqual(112);
+    expect(Math.abs(geometry.ratio-342/390)).toBeLessThan(.01);
+    expect(geometry.scrollWidth).toBe(geometry.width);
+  }
+});
+test('return beam mirrors the outbound brightness and size profile', async ({ page }) => {
+  await page.goto('/');await expect(page.locator('.startup-glow')).toBeVisible();
+  const profiles=await page.locator('.startup-glow').evaluate(element=>{
+    const animation=element.getAnimations()[0];animation.pause();
+    const times=[220,550,880,1320,1650,1980];
+    const samples=times.map(t=>{animation.currentTime=t;const r=element.getBoundingClientRect();return {x:r.x,width:r.width,alpha:Number(getComputedStyle(element).opacity)}});
+    animation.play();return samples;
+  });
+  for(let i=0;i<3;i++){
+    expect(Math.abs(profiles[i].alpha-profiles[5-i].alpha)).toBeLessThan(.02);
+    expect(Math.abs(profiles[i].width-profiles[5-i].width)).toBeLessThan(1);
+  }
+  expect(profiles[3].x).toBeGreaterThan(profiles[4].x);
+  expect(profiles[4].x).toBeGreaterThan(profiles[5].x);
 });

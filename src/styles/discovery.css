@@ -1,0 +1,42 @@
+/* Desktop: expose the landmark first; the first downward wheel opens the grid. */
+.social-grid.is-desktop-gated:not(.is-revealed) .social-card{opacity:0;transform:translateY(clamp(32px,6svh,60px));pointer-events:none}
+.social-grid.is-desktop-gated.is-revealed .social-card{animation:wheel-card-rise .48s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:var(--stagger,0ms)}
+@keyframes wheel-card-rise{from{opacity:0;transform:translateY(clamp(32px,6svh,60px))}to{opacity:1;transform:translateY(0)}}
+@media(min-width:761px){
+  .hero{min-height:clamp(350px,calc(100svh - 240px),760px)}
+  .identity-stage{min-height:0;height:clamp(330px,calc(100svh - 300px),640px)}
+  .float-anchor{--card-w:clamp(270px,min(28vw,44svh),360px);width:var(--card-w);height:calc(var(--card-w) * 390 / 342)}
+  .identity-top{padding:clamp(16px,2svh,24px) clamp(20px,2vw,26px)}
+  .sculpture{height:calc(var(--card-w) * .56)}
+  .sculpture-avatar{width:calc(var(--card-w) * .44);height:calc(var(--card-w) * .44)}
+  .identity-bottom{margin:12px 22px}
+  .stack-qr{width:calc(var(--card-w) * .49);height:calc(var(--card-w) * .49)}
+  .stack-share-caption{padding:12px 18px}
+}
+@media(min-width:761px) and (max-height:720px){
+  .topbar-space,.topbar{height:88px}
+  .topbar.is-scrolled{height:64px}
+  .hero-copy{padding:16px 0}
+  .availability{margin-bottom:14px}
+  .hello{margin-bottom:8px}
+  .hero-copy h1{font-size:clamp(42px,7svh,60px);margin-bottom:14px}
+  .hero-copy h2{font-size:20px;margin-bottom:14px}
+  .hero-meta{margin-top:16px}
+}
+@media(prefers-reduced-motion:reduce){.social-grid.is-desktop-gated .social-card{animation:none;opacity:1;transform:none}}
+@media(min-width:761px){
+  .identity-stage{--orbit-size:clamp(350px,56svh,500px)}
+  .identity-stage .orbital-two{width:var(--orbit-size);height:var(--orbit-size)}
+  .identity-stage .orbital-one,.orbit-front{width:calc(var(--orbit-size) * .98);height:calc(var(--orbit-size) * .7)}
+  .identity-stage .motion-aura{width:calc(var(--orbit-size) * 1.12);height:calc(var(--orbit-size) * 1.1)}
+}
+@media(min-width:761px){
+  .identity-front{display:flex;flex-direction:column}
+  .identity-front .sculpture{flex:1;min-height:0;height:auto}
+  .identity-front>.identity-top,.identity-front>.identity-bottom,.identity-front>.identity-edge{flex-shrink:0}
+}
+@media(min-width:761px) and (max-height:720px){
+  .identity-stage{height:max(360px,calc(100svh - 300px))}
+  .coordinate-top{top:10px}
+  .coordinate-bottom{bottom:2px}
+}

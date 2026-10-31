@@ -24,3 +24,7 @@ Browser scenarios cover reload/continuous turns and pressure, avatar failure, cl
 ## Boundaries
 
 No P3 visual redesign. No deletion of local work snapshots. `.idea` and `dist` are ignored and untracked; no index cleanup was necessary. GitHub Actions and the public domain have not been validated for this branch; merging main and checking its deployment remain separate steps. Social crawlers may need to refresh cached previews after deployment.
+
+## Desktop discovery interaction follow-up
+
+Desktop social cards are initially transparent and inert until the first downward wheel input. Native downward scrolling (keyboard, anchors and restored positions) also opens the grid. Rows/columns receive a short stagger calculated from the actual grid, and revealed cards stay visible. Dialog wheel and browser pinch/zoom wheel events do not trigger the grid. Mobile keeps viewport fades; reduced motion shows content directly. Hero, card, orbit and compact-header sizes adapt to viewport height, preserving the card aspect ratio. Startup beam uses two mirrored 1.1-second passes, with the same brightness/speed profile outbound and returning.
