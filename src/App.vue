@@ -33,6 +33,8 @@ const turning = ref(false)
 const hoverZone = ref<CardZone>('right')
 const coreLayers = [-2.4, -1.2, 0, 1.2, 2.4]
 const entering = ref(true)
+const orbitStartOne = ref(`${Math.floor(Math.random() * 360)}deg`)
+const orbitStartTwo = ref(`${Math.floor(Math.random() * 360)}deg`)
 let entranceTimer: ReturnType<typeof setTimeout> | undefined
 let flipTimer: ReturnType<typeof setTimeout> | undefined
 const flipHint = computed(() => {
@@ -64,7 +66,7 @@ let lightFrame = 0
 let pointerPosition: { x: number; y: number } | null = null
 function updateSurfaceLights() {
   if (!mouseInside || !pointerPosition) { lightFrame = 0; return }
-  const faces = stack.value?.querySelectorAll<HTMLElement>('.card-face, .identity-share')
+  const faces = stack.value?.querySelectorAll<HTMLElement>('.identity-front, .identity-share')
   faces?.forEach(face => {
     const points = Array.from(face.querySelectorAll<HTMLElement>('.surface-probe')).map(probe => {
       const rect = probe.getBoundingClientRect(); return { x: rect.left, y: rect.top }
@@ -199,7 +201,7 @@ onMounted(() => {
         applyPointerTilt(pointerPosition.x, pointerPosition.y)
         if (!lightFrame) lightFrame = requestAnimationFrame(updateSurfaceLights)
       }
-    }, 1520)
+    }, 1620)
   }
   if ('IntersectionObserver' in window && !reducedMotion()) {
     scrollObserver = new IntersectionObserver(entries => {
@@ -331,18 +333,18 @@ async function makePoster() {
             <a class="primary-button copy-fade" style="--fade-delay:1060ms" href="#connections">{{ t.contact }}<Icon name="arrow" /></a>
             <div class="hero-meta copy-fade" style="--fade-delay:1140ms"><template v-if="text(config.location)"><Icon name="globe" /><span>{{ text(config.location) }}</span><span class="meta-dot">·</span></template><span>{{ config.handle }}</span></div>
           </div>
-          <div class="identity-stage" :class="{ 'is-entering': entering }">
-            <div class="orbital orbital-one stage-ambient" aria-hidden="true"></div><div class="orbital orbital-two stage-ambient" aria-hidden="true"></div><div class="motion-aura stage-ambient" aria-hidden="true"></div><div class="motion-sparks" aria-hidden="true"><i v-for="n in 6" :key="n"></i></div>
-            <div class="ground-shadow stage-ambient" aria-hidden="true"></div><div class="orbit-front stage-ambient" aria-hidden="true"></div><span class="stage-coordinate coordinate-top stage-ambient" aria-hidden="true">PERSONAL IDENTITY — 001</span>
-            <div class="float-anchor" @click="activateStack" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack"><div class="card-entrance"><div class="float-rig" :class="{ 'is-sharing': stackOpen, 'is-pressed': stackPressed, 'is-entering': entering }"><div class="identity-stack" ref="stack" :style="{ '--turn-x': `${turnX}deg`, '--turn-y': `${turnY}deg` }" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl, 'is-pressed': stackPressed, 'is-turning': turning }" role="button" tabindex="0" :aria-label="t.revealShare" :aria-expanded="stackOpen" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)" @keydown.up.prevent="activateStack($event)" @keydown.down.prevent="activateStack($event)" @keydown.left.prevent="activateStack($event)" @keydown.right.prevent="activateStack($event)">
+          <div class="identity-stage" :class="{ 'is-entering': entering, 'is-turning-stage': turning }" :style="{ '--orbit-start-1': orbitStartOne, '--orbit-start-2': orbitStartTwo }">
+            <div class="orbital orbital-one" aria-hidden="true"></div><div class="orbital orbital-two" aria-hidden="true"></div><div class="motion-aura" aria-hidden="true"></div><div class="motion-sparks" aria-hidden="true"><i v-for="n in 6" :key="n"></i></div>
+            <div class="ground-shadow stage-ambient" aria-hidden="true"></div><div class="orbit-front" aria-hidden="true"></div><span class="stage-coordinate coordinate-top stage-ambient" aria-hidden="true">PERSONAL IDENTITY — 001</span>
+            <div class="float-anchor" @click="activateStack" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack"><div class="float-rig" :class="{ 'is-sharing': stackOpen, 'is-pressed': stackPressed, 'is-entering': entering }"><div class="identity-stack" ref="stack" :style="{ '--turn-x': `${turnX}deg`, '--turn-y': `${turnY}deg` }" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl, 'is-pressed': stackPressed, 'is-turning': turning, 'is-entering': entering }" role="button" tabindex="0" :aria-label="t.revealShare" :aria-expanded="stackOpen" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)" @keydown.up.prevent="activateStack($event)" @keydown.down.prevent="activateStack($event)" @keydown.left.prevent="activateStack($event)" @keydown.right.prevent="activateStack($event)">
             <div v-for="z in coreLayers" :key="z" class="card-core-layer" :style="{ '--core-z': `${z}px` }" aria-hidden="true"></div>
-            <div class="identity-card identity-front" ref="identity" :aria-hidden="stackOpen"><div class="card-face"><i v-for="n in 4" :key="n" class="surface-probe" :class="`probe-${n}`" aria-hidden="true"></i>
+            <div class="identity-card identity-front" ref="identity" :aria-hidden="stackOpen"><i v-for="n in 4" :key="n" class="surface-probe" :class="`probe-${n}`" aria-hidden="true"></i>
               <div class="card-sheen" aria-hidden="true"></div><div class="motion-glint" aria-hidden="true"></div>
               <div class="identity-top"><span class="micro-label">{{ t.card }}</span><span class="identity-symbol" aria-hidden="true">✳</span></div>
               <div class="sculpture" aria-hidden="true"><span v-if="rippleKey" :key="rippleKey" class="avatar-ripple"></span><img v-if="config.avatar" class="sculpture-avatar" :src="asset(config.avatar)" alt="" /><template v-else><span class="sculpture-shadow">{{ config.monogram }}</span><span class="sculpture-letter">{{ config.monogram }}<i>.</i></span></template></div>
               <div class="identity-bottom"><div class="identity-owner"><img v-if="config.avatar" :src="asset(config.avatar)" alt="" /><span v-else class="mini-avatar">{{ config.monogram }}</span><div><strong>{{ config.name }}</strong><span>{{ t.available }}</span></div></div><span class="identity-qr" aria-hidden="true"><Icon name="qr" /></span></div>
               <div class="identity-edge"><span>DK CONNECT</span><span>01 — ∞</span></div>
-            </div></div>
+            </div>
             <div class="identity-card identity-share" :aria-hidden="!stackOpen"><i v-for="n in 4" :key="n" class="surface-probe" :class="`probe-${n}`" aria-hidden="true"></i>
               <div class="card-sheen" aria-hidden="true"></div><div class="motion-glint" aria-hidden="true"></div>
               <div class="identity-top"><span class="micro-label">{{ t.share }}</span><Icon name="arrow" /></div>
@@ -351,7 +353,7 @@ async function makePoster() {
               <div class="identity-edge"><span>DK CONNECT</span><span><Icon name="arrow" /> {{ t.revealShare }}</span></div>
             </div><span v-if="copiedValue === shareUrl" class="motion-copy-burst" aria-hidden="true">✳</span>
             </div>
-            </div></div></div><span class="stage-coordinate coordinate-bottom stage-ambient" aria-hidden="true"><span class="tiny-cross">+</span> LESS DISTANCE. MORE CONNECTION.</span>
+            </div></div><span class="stage-coordinate coordinate-bottom stage-ambient" aria-hidden="true"><span class="tiny-cross">+</span> LESS DISTANCE. MORE CONNECTION.</span>
           </div>
         </section>
         <section class="connections reveal" id="connections" aria-labelledby="connections-title" style="--delay:1320ms">

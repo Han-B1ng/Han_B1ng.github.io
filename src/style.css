@@ -126,71 +126,177 @@
 @media(prefers-reduced-motion:reduce){.identity-stack{filter:none!important;transform:none!important}.identity-stack:not(.is-open) .identity-share{transform:translate(19px,-12px) rotate(4deg)!important}.social-card:hover,.scroll-enter.in-view:hover{transform:none!important}}
 /* Local 3D study: stable interaction plane, floating rig, and seamless rounded metallic card volume. */
 .identity-stage{perspective:1200px;min-height:520px}
-.float-anchor{position:relative;width:342px;height:390px;z-index:2;perspective:1000px}
+.float-anchor{position:relative;width:342px;height:390px;z-index:2;perspective:1100px;transform-style:preserve-3d}
 .float-rig{width:100%;height:100%;transform-style:preserve-3d;animation:levitate-rig 8s ease-in-out infinite;will-change:transform}
-.float-rig.is-sharing,.float-rig.is-pressed{animation-play-state:paused}
+.float-rig.is-sharing,.float-rig.is-pressed,.float-rig.is-entering{animation-play-state:paused}
 .float-rig .identity-stack{width:100%;height:100%;animation:none;filter:none!important;isolation:auto;transform-style:preserve-3d;perspective:none;transform:rotateX(0deg) rotateY(0deg) rotateX(var(--turn-x,0deg)) rotateY(var(--turn-y,0deg));transition:transform .54s cubic-bezier(.2,.85,.24,1)!important}
 .float-rig .identity-stack.is-pressed:not(.is-turning){transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) rotateX(var(--turn-x,0deg)) rotateY(var(--turn-y,0deg));transition:transform .2s ease-out!important}
 .float-rig .identity-stack.is-turning{transform:rotateX(0deg) rotateY(0deg) rotateX(var(--turn-x,0deg)) rotateY(var(--turn-y,0deg));transition:transform .54s cubic-bezier(.2,.85,.24,1)!important}
 .card-core-layer{position:absolute;inset:0;border-radius:19px;pointer-events:none;background:linear-gradient(135deg,#8e95a5 0%,#303543 45%,#aeb5c4 75%,#232732 100%);border:1px solid #d8deeb55;box-shadow:inset 0 0 0 1px #ffffff18;transform:translateZ(var(--core-z,0px));backface-visibility:visible}
 :root[data-theme=light] .card-core-layer{background:linear-gradient(135deg,#ffffff 0%,#b8beca 45%,#eef0f4 75%,#9298a6 100%);border-color:#ffffffaa;box-shadow:inset 0 0 0 1px #42485b1f}
-.float-rig .identity-stack .identity-front{overflow:visible;backdrop-filter:none;-webkit-backdrop-filter:none;transform-style:preserve-3d;background:none;box-shadow:none;border:0;filter:none!important}
-.float-rig .identity-front:after{display:none}
-.card-face{position:absolute;inset:0;border-radius:19px;overflow:hidden;background:linear-gradient(140deg,var(--card-top),var(--card-bottom) 80%);border:1px solid #ffffff48;box-shadow:inset 0 1px 0 #ffffff70,0 24px 45px #0005;transform:translateZ(.1px);backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.card-face:after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at var(--light-x,40%) var(--light-y,20%),#ffffff26,transparent 65%);border-radius:inherit}
-:root[data-theme=light] .card-face{border-color:#fffc;box-shadow:inset 0 1px 0 #fff,0 24px 45px var(--shadow)}
-.float-rig .identity-stack .identity-front,.float-rig .identity-stack:not(.is-open) .identity-front,.float-rig .identity-stack.is-open .identity-front{transform:translateZ(3.6px)!important;animation:none!important;transition:none!important;z-index:1;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.float-rig .identity-stack .identity-share,.float-rig .identity-stack.is-open .identity-share,.float-rig .identity-stack.has-interacted:not(.is-open) .identity-share,.float-rig .identity-stack:not(.is-open):not(.has-interacted) .identity-share{filter:none!important;background:linear-gradient(140deg,var(--card-top),var(--card-bottom));border-color:#ffffff35;transform:rotateY(180deg) translateZ(3.6px)!important;animation:none!important;transition:none!important;z-index:1;backface-visibility:hidden;-webkit-backface-visibility:hidden;opacity:1;box-shadow:0 15px 35px #0005}
-:root[data-theme=light] .float-rig .identity-stack .identity-share{border-color:#fffc;box-shadow:inset 0 1px 0 #fff,0 15px 35px var(--shadow)}
+.float-rig .identity-stack .identity-front,.float-rig .identity-stack:not(.is-open) .identity-front,.float-rig .identity-stack.is-open .identity-front{position:absolute;inset:0;border-radius:19px;overflow:hidden;backdrop-filter:none;-webkit-backdrop-filter:none;filter:none!important;background:linear-gradient(140deg,var(--card-top),var(--card-bottom) 80%);border:1px solid #ffffff48;box-shadow:inset 0 1px 0 #ffffff70,0 24px 45px #0005;transform:rotateY(0deg) translateZ(3.6px)!important;animation:none!important;transition:none!important;z-index:2;backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important}
+.float-rig .identity-stack .identity-share,.float-rig .identity-stack.is-open .identity-share,.float-rig .identity-stack.has-interacted:not(.is-open) .identity-share,.float-rig .identity-stack:not(.is-open):not(.has-interacted) .identity-share{position:absolute;inset:0;border-radius:19px;overflow:hidden;backdrop-filter:none;-webkit-backdrop-filter:none;filter:none!important;background:linear-gradient(140deg,var(--card-top),var(--card-bottom));border:1px solid #ffffff35;transform:rotateY(180deg) translateZ(3.6px)!important;animation:none!important;transition:none!important;z-index:1;backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;opacity:1;box-shadow:0 15px 35px #0005}
+:root[data-theme=light] .float-rig .identity-stack .identity-front,:root[data-theme=light] .float-rig .identity-stack .identity-share{border-color:#fffc;box-shadow:inset 0 1px 0 #fff,0 20px 40px var(--shadow)}
 .float-rig .identity-stack .motion-glint,.float-rig .card-sheen,.float-rig .identity-stack .motion-copy-burst,.motion-sparks{animation:none;background:none;display:none}
 .float-rig .sculpture-avatar{animation:none;transform:rotate(-3deg);box-shadow:0 20px 35px #0008}
-.identity-stage .motion-aura{width:560px;height:550px;z-index:-1;background:radial-gradient(ellipse,#c1cbe732 0%,#b0bed419 34%,transparent 68%);animation:levitate-halo 8s ease-in-out infinite;filter:blur(22px)}
 .ground-shadow{position:absolute;bottom:18px;left:50%;width:280px;height:45px;border-radius:50%;background:radial-gradient(ellipse,#000e 0%,#0008 40%,transparent 72%);filter:blur(8px);transform:translateX(-50%);animation:levitate-shadow 8s ease-in-out infinite;pointer-events:none;z-index:0}
-.orbit-front{position:absolute;left:50%;top:50%;width:460px;height:330px;border:1px solid #ffffff30;border-radius:50%;clip-path:inset(52% -10% -10% -10%);transform:translate(-50%,-50%) rotate(-18deg) rotateX(36deg);pointer-events:none;z-index:4;box-shadow:0 1px 0 #ffffff0a}
-.identity-stage:has(.is-sharing) .orbit-front{z-index:1}
-.identity-stage .orbital-one{width:460px;height:330px;transform:rotate(-18deg) rotateX(36deg);animation:none;clip-path:inset(-10% -10% 48% -10%);border-color:#ffffff30;z-index:0}
-.identity-stage .orbital-two{animation:orbit-drift-two 28s ease-in-out infinite alternate;opacity:.6;z-index:0}
-:root[data-theme=light] .identity-stage .motion-aura{background:radial-gradient(ellipse,#fff 0%,#fff9 34%,transparent 68%)}
-:root[data-theme=light] .orbit-front,:root[data-theme=light] .identity-stage .orbital-one{border-color:#33333328}
 :root[data-theme=light] .ground-shadow{opacity:.35}
 @keyframes levitate-rig{0%,100%{transform:translateY(9px) rotateX(6deg) rotateY(-12deg) rotateZ(-1deg)}25%{transform:translateY(-7px) rotateX(2deg) rotateY(-8deg) rotateZ(1deg)}50%{transform:translateY(-18px) rotateX(-3deg) rotateY(-5deg) rotateZ(2deg)}75%{transform:translateY(-3px) rotateX(1deg) rotateY(-10deg) rotateZ(0deg)}}
 @keyframes levitate-shadow{0%,100%{transform:translateX(-50%) scale(.87);opacity:.85;filter:blur(7px)}50%{transform:translateX(-50%) scale(1.16);opacity:.38;filter:blur(13px)}}
-@keyframes levitate-halo{0%,100%{opacity:.6;transform:scale(.98)}50%{opacity:1;transform:scale(1.05)}}
-.identity-stage:has(.is-sharing) .ground-shadow,.identity-stage:has(.is-sharing) .motion-aura,.identity-stage:has(.is-pressed) .ground-shadow,.identity-stage:has(.is-pressed) .motion-aura{animation-play-state:paused}
+.identity-stage:has(.is-sharing) .ground-shadow,.identity-stage:has(.is-pressed) .ground-shadow{animation-play-state:paused}
 @media(min-width:1500px){.float-anchor{width:360px;height:405px}}
-@media(max-width:1050px){.float-anchor{width:290px;height:350px}.identity-stage{min-height:470px}.orbit-front,.identity-stage .orbital-one{width:360px;height:290px}}
-@media(max-width:760px){.float-anchor{width:270px;height:320px}.identity-stage{min-height:410px;margin-bottom:12px}.orbit-front,.identity-stage .orbital-one{width:320px;height:270px}.identity-stage .motion-aura{width:370px;height:420px}.ground-shadow{width:220px;height:35px;bottom:7px}}
-@media(prefers-reduced-motion:reduce){.float-rig{animation:none;transform:rotateY(-8deg)}.ground-shadow,.identity-stage .motion-aura{animation:none}.float-rig .identity-stack,.float-rig .identity-stack.is-open,.float-rig .identity-stack.is-pressed:not(.is-turning),.float-rig .identity-stack.is-turning{transform:rotateX(var(--turn-x,0deg)) rotateY(var(--turn-y,0deg));transition:none!important}}
+@media(max-width:1050px){.float-anchor{width:290px;height:350px}.identity-stage{min-height:470px}}
+@media(max-width:760px){.float-anchor{width:270px;height:320px}.identity-stage{min-height:410px;margin-bottom:12px}.ground-shadow{width:220px;height:35px;bottom:7px}}
+@media(prefers-reduced-motion:reduce){.float-rig{animation:none;transform:rotateY(-8deg)}.ground-shadow{animation:none}.float-rig .identity-stack,.float-rig .identity-stack.is-open,.float-rig .identity-stack.is-pressed:not(.is-turning),.float-rig .identity-stack.is-turning{transform:rotateX(var(--turn-x,0deg)) rotateY(var(--turn-y,0deg));transition:none!important}}
 /* Zero-size probes measure the true projected coordinates of each face. */
 .surface-probe{position:absolute;width:0;height:0;pointer-events:none;visibility:hidden}
 .probe-1{left:0;top:0}.probe-2{left:100%;top:0}.probe-3{left:100%;top:100%}.probe-4{left:0;top:100%}
-.identity-stage .motion-aura{display:block;background:radial-gradient(ellipse,#dce5ff40 0%,#c5d2ed28 30%,#b4c6f012 49%,transparent 72%);filter:blur(25px);animation:halo-drift 9s ease-in-out infinite alternate!important;animation-play-state:running!important}
-.identity-stage .orbital-one{animation:orbit-back-sway 12s ease-in-out infinite alternate!important}
-.identity-stage .orbit-front{animation:orbit-front-sway 12s ease-in-out infinite alternate!important}
-.identity-stage .orbital-two{animation:orbit-drift-two 20s linear infinite alternate!important;border-color:#cfd8ef40}
-@keyframes orbit-back-sway{from{transform:rotate(-27deg) rotateX(24deg)}to{transform:rotate(-7deg) rotateX(49deg)}}
-@keyframes orbit-front-sway{from{transform:translate(-50%,-50%) rotate(-27deg) rotateX(24deg)}to{transform:translate(-50%,-50%) rotate(-7deg) rotateX(49deg)}}
-@keyframes halo-drift{from{opacity:.7;transform:translate(-16px,12px) scale(.95)}to{opacity:1;transform:translate(18px,-15px) scale(1.1)}}
-:root[data-theme=light] .identity-stage .motion-aura{background:radial-gradient(ellipse,#fff 0%,#fff9 35%,#adb9ce20 52%,transparent 72%)}
-@media(prefers-reduced-motion:reduce){.identity-stage .motion-aura,.identity-stage .orbital-one,.identity-stage .orbit-front,.identity-stage .orbital-two{animation:none!important}}
 
-/* Choreographed entrance: card sweeps from left with a 360° flip, wipes main headings, fades subcopy, and drops topbar. */
+/* Registered custom property for smooth conic-gradient orbital ring drawing. */
+@property --orbit-draw {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 360deg;
+}
+
+/* Post-landing orbital ring draw from random start angle + directional rolling, centered around the card. */
+.orbit-front,.identity-stage .orbital-one{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:460px;
+  height:330px;
+  border-radius:50%;
+  border:1px solid #ffffff38;
+  pointer-events:none;
+  opacity:0;
+  --orbit-draw:0deg;
+  transform:translate(-50%,-50%) rotate(-24deg) rotateX(28deg) rotateZ(0deg);
+  -webkit-mask-image:conic-gradient(from var(--orbit-start-1,0deg),#000 0deg,#000 var(--orbit-draw),transparent calc(var(--orbit-draw) + 1deg));
+  mask-image:conic-gradient(from var(--orbit-start-1,0deg),#000 0deg,#000 var(--orbit-draw),transparent calc(var(--orbit-draw) + 1deg));
+}
+.identity-stage .orbital-one{
+  clip-path:inset(-12% -12% 48% -12%);
+  z-index:0;
+  animation:orbit-draw-ring .82s cubic-bezier(.22,1,.36,1) 1.48s forwards,orbit-roll-one 16s ease-in-out 2.3s infinite alternate!important;
+}
+.orbit-front{
+  clip-path:inset(52% -12% -12% -12%);
+  z-index:4;
+  box-shadow:0 1px 0 #ffffff12;
+  animation:orbit-draw-ring .82s cubic-bezier(.22,1,.36,1) 1.48s forwards,orbit-roll-one 16s ease-in-out 2.3s infinite alternate!important;
+}
+.identity-stage:has(.is-sharing) .orbit-front{z-index:1}
+.identity-stage .orbital-two{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:470px;
+  height:470px;
+  border-radius:50%;
+  border:1px dashed #cfd8ef48;
+  pointer-events:none;
+  z-index:0;
+  opacity:0;
+  --orbit-draw:0deg;
+  transform:translate(-50%,-50%) rotate(45deg) scaleY(.87) rotateZ(0deg);
+  -webkit-mask-image:conic-gradient(from var(--orbit-start-2,120deg),#000 0deg,#000 var(--orbit-draw),transparent calc(var(--orbit-draw) + 1deg));
+  mask-image:conic-gradient(from var(--orbit-start-2,120deg),#000 0deg,#000 var(--orbit-draw),transparent calc(var(--orbit-draw) + 1deg));
+  animation:orbit-draw-ring-two .92s cubic-bezier(.22,1,.36,1) 1.6s forwards,orbit-roll-two 24s linear 2.52s infinite!important;
+}
+:root[data-theme=light] .orbit-front,:root[data-theme=light] .identity-stage .orbital-one{border-color:#262b3830}
+:root[data-theme=light] .identity-stage .orbital-two{border-color:#262b3826}
+
+@keyframes orbit-draw-ring{
+  0%{--orbit-draw:0deg;opacity:0}
+  10%{opacity:1}
+  100%{--orbit-draw:360deg;opacity:1}
+}
+@keyframes orbit-draw-ring-two{
+  0%{--orbit-draw:0deg;opacity:0}
+  10%{opacity:.68}
+  100%{--orbit-draw:360deg;opacity:.68}
+}
+@keyframes orbit-roll-one{
+  0%{transform:translate(-50%,-50%) rotate(-24deg) rotateX(28deg) rotateZ(0deg)}
+  50%{transform:translate(-50%,-50%) rotate(-12deg) rotateX(44deg) rotateZ(180deg)}
+  100%{transform:translate(-50%,-50%) rotate(-24deg) rotateX(28deg) rotateZ(360deg)}
+}
+@keyframes orbit-roll-two{
+  from{transform:translate(-50%,-50%) rotate(45deg) scaleY(.87) rotateZ(0deg)}
+  to{transform:translate(-50%,-50%) rotate(45deg) scaleY(.87) rotateZ(-360deg)}
+}
+
+/* Dual-layer energy aura: blooms on card landing, drifts with depth, and pulses on flip. */
+.identity-stage .motion-aura{
+  display:block;
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:560px;
+  height:550px;
+  border-radius:50%;
+  z-index:-1;
+  pointer-events:none;
+  transform:translate(-50%,-50%) scale(.32);
+  background:
+    radial-gradient(circle at 46% 44%,#e8f0ff52 0%,#b8ccf52e 26%,#8ea8e814 48%,transparent 70%),
+    conic-gradient(from 40deg at 50% 50%,transparent 0deg,#c5d4f724 90deg,transparent 180deg,#d8c8f51f 270deg,transparent 360deg);
+  filter:blur(26px);
+  opacity:0;
+  animation:aura-bloom .88s cubic-bezier(.18,.88,.26,1.06) 1.46s forwards,aura-drift 10s ease-in-out 2.34s infinite alternate!important;
+}
+.identity-stage .motion-aura:before{
+  content:'';
+  position:absolute;
+  inset:18%;
+  border-radius:50%;
+  background:radial-gradient(circle,#ffffff36 0%,#cfdcf718 45%,transparent 72%);
+  filter:blur(14px);
+  transition:transform .52s cubic-bezier(.2,.85,.24,1),opacity .52s;
+}
+.identity-stage.is-turning-stage .motion-aura:before{
+  transform:scale(1.24);
+  opacity:1;
+}
+:root[data-theme=light] .identity-stage .motion-aura{
+  background:
+    radial-gradient(circle at 46% 44%,#ffffff 0%,#e2e8f5b8 32%,#b8c4dc38 55%,transparent 74%),
+    conic-gradient(from 40deg at 50% 50%,transparent 0deg,#9aa8c726 110deg,transparent 210deg,#b8c3db24 300deg,transparent 360deg);
+}
+:root[data-theme=light] .identity-stage .motion-aura:before{
+  background:radial-gradient(circle,#ffffff 0%,#d5deef55 50%,transparent 75%);
+}
+@keyframes aura-bloom{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.32);filter:blur(36px)}
+  68%{opacity:1;transform:translate(-50%,-50%) scale(1.05);filter:blur(22px)}
+  100%{opacity:.92;transform:translate(-50%,-50%) scale(1);filter:blur(26px)}
+}
+@keyframes aura-drift{
+  0%{opacity:.82;transform:translate(calc(-50% - 14px),calc(-50% + 10px)) scale(.96) rotate(0deg)}
+  100%{opacity:1;transform:translate(calc(-50% + 16px),calc(-50% - 12px)) scale(1.08) rotate(12deg)}
+}
+
+/* Choreographed entrance: card enters showing FRONT face (avatar), flips to BACK face (QR code) in mid-flight, then flips back to FRONT face on landing. */
 .hero{position:relative}
 .hero-copy{position:relative;z-index:1}
 .identity-stage{position:relative;z-index:3}
 .identity-stage.is-entering .float-anchor{pointer-events:none}
-.card-entrance{width:100%;height:100%;transform-style:preserve-3d;animation:card-sweep-in 1.48s cubic-bezier(.22,1,.32,1) both;will-change:transform}
-.identity-stage:not(.is-entering) .card-entrance{animation:none;transform:none;will-change:auto}
+.float-rig .identity-stack.is-entering{
+  animation:card-sweep-in 1.6s cubic-bezier(.22,1,.32,1) both!important;
+  transition:none!important;
+}
 .copy-wipe{animation:copy-wipe-reveal .76s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--wipe-delay,200ms);will-change:clip-path,transform,opacity,filter}
 .copy-fade{animation:copy-fade-in .68s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--fade-delay,920ms)}
-.topbar-drop{animation:topbar-drop-in .72s cubic-bezier(.22,1,.36,1) both;animation-delay:1160ms}
-.stage-ambient{animation:stage-ambient-fade .75s ease-out both;animation-delay:960ms}
+.topbar-drop{animation:topbar-drop-in .76s cubic-bezier(.22,1,.36,1) both;animation-delay:1200ms}
+.stage-ambient{animation:stage-ambient-fade .65s ease-out both;animation-delay:1520ms}
 @keyframes card-sweep-in{
-  0%{opacity:0;transform:translate3d(-660px,14px,90px) rotateY(-360deg) rotateZ(-8deg) scale(.9)}
-  12%{opacity:1}
-  48%{opacity:1;transform:translate3d(-300px,-14px,130px) rotateY(-180deg) rotateZ(4deg) scale(1.03)}
-  82%{opacity:1;transform:translate3d(14px,4px,16px) rotateY(-12deg) rotateZ(-1deg) scale(1.005)}
-  100%{opacity:1;transform:translate3d(0,0,0) rotateY(0deg) rotateZ(0deg) scale(1)}
+  0%{opacity:0;transform:translate3d(-660px,12px,40px) rotateY(0deg) rotateZ(-5deg)}
+  10%{opacity:1;transform:translate3d(-570px,8px,55px) rotateY(0deg) rotateZ(-4deg)}
+  24%{opacity:1;transform:translate3d(-440px,2px,80px) rotateY(12deg) rotateZ(-2deg)}
+  48%{opacity:1;transform:translate3d(-240px,-10px,115px) rotateY(180deg) rotateZ(2deg)}
+  64%{opacity:1;transform:translate3d(-130px,-6px,95px) rotateY(180deg) rotateZ(1deg)}
+  100%{opacity:1;transform:translate3d(0,0,0) rotateY(360deg) rotateZ(0deg)}
 }
 @keyframes copy-wipe-reveal{
   0%{opacity:.15;clip-path:inset(-15% 100% -15% -5%);transform:translateX(-26px);filter:blur(6px)}
@@ -201,7 +307,8 @@
   100%{opacity:1;transform:translateY(0);filter:blur(0)}
 }
 @keyframes topbar-drop-in{
-  0%{opacity:0;transform:translateY(-36px)}
+  0%{opacity:0;transform:translateY(-38px)}
+  36%{opacity:1;transform:translateY(-14px)}
   100%{opacity:1;transform:translateY(0)}
 }
 @keyframes stage-ambient-fade{
@@ -209,21 +316,28 @@
   100%{opacity:1}
 }
 @media(max-width:1050px){
+  .orbit-front,.identity-stage .orbital-one{width:360px;height:290px}
+  .identity-stage .orbital-two{width:390px;height:390px}
   @keyframes card-sweep-in{
-    0%{opacity:0;transform:translate3d(-480px,10px,70px) rotateY(-360deg) rotateZ(-7deg) scale(.9)}
-    12%{opacity:1}
-    48%{opacity:1;transform:translate3d(-220px,-10px,100px) rotateY(-180deg) rotateZ(3deg) scale(1.02)}
-    100%{opacity:1;transform:translate3d(0,0,0) rotateY(0deg) rotateZ(0deg) scale(1)}
+    0%{opacity:0;transform:translate3d(-480px,10px,40px) rotateY(0deg) rotateZ(-5deg)}
+    22%{opacity:1;transform:translate3d(-340px,2px,70px) rotateY(12deg) rotateZ(-2deg)}
+    48%{opacity:1;transform:translate3d(-180px,-8px,95px) rotateY(180deg) rotateZ(2deg)}
+    64%{opacity:1;transform:translate3d(-100px,-4px,80px) rotateY(180deg) rotateZ(1deg)}
+    100%{opacity:1;transform:translate3d(0,0,0) rotateY(360deg) rotateZ(0deg)}
   }
 }
 @media(max-width:760px){
+  .orbit-front,.identity-stage .orbital-one{width:320px;height:270px}
+  .identity-stage .orbital-two{width:350px;height:350px}
+  .identity-stage .motion-aura{width:370px;height:420px}
   @keyframes card-sweep-in{
-    0%{opacity:0;transform:translate3d(-85vw,-110px,60px) rotateY(-360deg) rotateZ(-8deg) scale(.88)}
-    14%{opacity:1}
-    50%{opacity:1;transform:translate3d(-28vw,-45px,90px) rotateY(-180deg) rotateZ(3deg) scale(1.02)}
-    100%{opacity:1;transform:translate3d(0,0,0) rotateY(0deg) rotateZ(0deg) scale(1)}
+    0%{opacity:0;transform:translate3d(-85vw,-110px,40px) rotateY(0deg) rotateZ(-5deg)}
+    22%{opacity:1;transform:translate3d(-60vw,-78px,65px) rotateY(12deg) rotateZ(-2deg)}
+    50%{opacity:1;transform:translate3d(-26vw,-38px,85px) rotateY(180deg) rotateZ(2deg)}
+    64%{opacity:1;transform:translate3d(-14vw,-20px,70px) rotateY(180deg) rotateZ(1deg)}
+    100%{opacity:1;transform:translate3d(0,0,0) rotateY(360deg) rotateZ(0deg)}
   }
 }
 @media(prefers-reduced-motion:reduce){
-  .card-entrance,.copy-wipe,.copy-fade,.topbar-drop,.stage-ambient{animation:none!important;clip-path:none!important;transform:none!important;filter:none!important;opacity:1!important}
+  .float-rig .identity-stack.is-entering,.copy-wipe,.copy-fade,.topbar-drop,.stage-ambient,.orbit-front,.identity-stage .orbital-one,.identity-stage .orbital-two,.identity-stage .motion-aura{animation:none!important;clip-path:none!important;-webkit-mask-image:none!important;mask-image:none!important;transform:none!important;filter:none!important;opacity:1!important}
 }
