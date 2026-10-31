@@ -26,7 +26,53 @@ const headerIdentity = computed(() => !scrolled.value ? 'PERSONAL SPACE' : inCon
   ? (language.value === 'zh' ? '01 / 我的数字坐标' : '01 / My digital coordinates')
   : (language.value === 'zh' ? '00 / 首页' : '00 / Home'));
 let sweepPlayed = false;
-function cancelSweep() { startupSweep.value = false; }
+const sweepHandoff = ref(false);
+let handoffAnimation: Animation | undefined;
+let handoffFrame = 0;
+let handoffRevision = 0;
+function cancelSweep() {
+  handoffRevision++;
+  cancelAnimationFrame(handoffFrame);
+  handoffAnimation?.cancel();
+  handoffAnimation = undefined;
+  sweepHandoff.value = false;
+  startupSweep.value = false;
+}
+async function interruptSweep() {
+  if (!startupSweep.value) return;
+  const beam = document.querySelector<HTMLElement>('.startup-glow');
+  if (!beam || reducedMotion()) { cancelSweep(); return; }
+  const from = beam.getBoundingClientRect();
+  const fromOpacity = getComputedStyle(beam).opacity;
+  const revision = ++handoffRevision;
+  startupSweep.value = false;
+  sweepHandoff.value = true;
+  await nextTick();
+  handoffFrame = requestAnimationFrame(() => {
+    if (revision !== handoffRevision) return;
+    const glow = document.querySelector<HTMLElement>('.header-glow');
+    const track = glow?.parentElement;
+    if (!glow || !track) { sweepHandoff.value = false; return; }
+    const trackRect = track.getBoundingClientRect();
+    const width = glow.offsetWidth;
+    const range = document.documentElement.scrollHeight - innerHeight;
+    const progress = range > 0 ? Math.max(0, Math.min(1, scrollY / range)) : 0;
+    handoffAnimation = glow.animate([
+      { left: `${from.left-trackRect.left}px`, width: `${from.width}px`, transform:'none', opacity:fromOpacity },
+      { left: `${progress*(trackRect.width-width)}px`, width: `${width}px`, transform:'none', opacity:1 },
+    ], { duration:130, easing:'cubic-bezier(.12,.8,.2,1)' });
+    handoffAnimation.id = 'scroll-light-handoff';
+    void handoffAnimation.finished.catch(() => {}).then(() => {
+      if (revision === handoffRevision) { sweepHandoff.value = false; handoffAnimation = undefined; }
+    });
+  });
+}
+function wheelDuringSweep(event: WheelEvent) {
+  if (event.deltaY > 0 && !event.ctrlKey && !document.querySelector('[role="dialog"]')) {
+    hasScrolled.value = true;
+    void interruptSweep();
+  }
+}
 function startSweepWithAura(event: AnimationEvent) {
   if (event.animationName !== 'aura-bloom' || sweepPlayed || hasScrolled.value || reducedMotion()) return;
   sweepPlayed = true;
@@ -35,7 +81,7 @@ function startSweepWithAura(event: AnimationEvent) {
 const startupSweep = ref(false);
 const hasScrolled = ref(false);
 watch(scrolled, value => {
-  if (value) { hasScrolled.value = true; cancelSweep(); }
+  if (value) { hasScrolled.value = true; void interruptSweep(); }
 });
 function finishSweep(event: AnimationEvent) {
   if (event.animationName === 'startup-sweep') startupSweep.value = false;
@@ -399,6 +445,7 @@ function startEntrance() {
   entranceStartFrame = requestAnimationFrame(frame);
 }
 onMounted(() => {
+  window.addEventListener("wheel", wheelDuringSweep, { passive:true });
   motionQuery.addEventListener("change", motionChanged);
   window.addEventListener("keydown", keydown);
   window.addEventListener("pointerdown", outsideStack);
@@ -427,6 +474,7 @@ onMounted(() => {
   }
 });
 function disposeEffects() {
+  window.removeEventListener("wheel", wheelDuringSweep);
   cancelSweep();
   languageDisposed = true;
   languageAnimations.forEach(animation => animation.cancel());
@@ -700,7 +748,7 @@ async function makePoster() {
             ><Icon name="share" />
           </button>
         </div>
-        <div class="header-track" :class="{ 'is-active': scrolled, 'is-starting': startupSweep }" :style="{ '--scroll-progress': scrollProgress }" aria-hidden="true"><span class="header-glow"></span><span v-if="startupSweep" class="startup-glow" @animationend="finishSweep"></span></div>
+        <div class="header-track" :class="{ 'is-active': scrolled, 'is-starting': startupSweep, 'is-handoff': sweepHandoff }" :style="{ '--scroll-progress': scrollProgress }" aria-hidden="true"><span class="header-glow"></span><span v-if="startupSweep" class="startup-glow" @animationend="finishSweep"></span></div>
       </header>
       <main>
         <section class="hero" aria-labelledby="hero-title">

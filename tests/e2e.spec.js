@@ -218,7 +218,8 @@ test('desktop first downward wheel reveals the entire grid across screen proport
     await expect(grid).toHaveClass(/is-revealed/);
     await expect(grid.locator('.social-card').last()).toHaveCSS('opacity','1');
     await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
-    await expect(grid).toHaveClass(/is-revealed/);
+    await expect(grid).not.toHaveClass(/is-revealed/);
+    await expect(grid.locator('.social-card').first()).toHaveCSS('opacity','0');
     const geometry=await page.evaluate(()=>{
       const header=document.querySelector('header').getBoundingClientRect();
       const card=document.querySelector('.float-anchor').getBoundingClientRect();
@@ -243,4 +244,32 @@ test('return beam mirrors the outbound brightness and size profile', async ({ pa
   }
   expect(profiles[3].x).toBeGreaterThan(profiles[4].x);
   expect(profiles[4].x).toBeGreaterThan(profiles[5].x);
+});
+
+test('interrupted startup beam hands its current position to scroll light quickly', async ({ page }) => {
+  await page.goto('/');await expect(page.locator('.startup-glow')).toBeVisible();
+  const handoff=await page.evaluate(async()=>{
+    const from=document.querySelector('.startup-glow').getBoundingClientRect().left;
+    window.dispatchEvent(new WheelEvent('wheel',{deltaY:100}));
+    window.scrollTo({top:100,behavior:'instant'});
+    await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
+    const animation=document.querySelector('.header-glow').getAnimations().find(a=>a.id==='scroll-light-handoff');
+    return {from, duration:animation?.effect.getTiming().duration, start:animation?.effect.getKeyframes()[0].left};
+  });
+  expect(handoff.duration).toBe(130);
+  expect(Math.abs(parseFloat(handoff.start)-handoff.from)).toBeLessThan(1);
+  await expect(page.locator('.startup-glow')).toHaveCount(0);
+  await expect(page.locator('.header-track')).not.toHaveClass(/is-handoff/);
+});
+test('desktop grid retreats after a top dwell and can rise again without a reload', async ({ page }) => {
+  await page.goto('/');await settled(page);
+  const grid=page.locator('.social-grid'), first=grid.locator('.social-card').first();
+  await page.mouse.wheel(0,120);await expect(grid).toHaveClass(/is-revealed/);await expect(first).toHaveCSS('opacity','1');
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  await page.waitForTimeout(90);await expect(grid).toHaveClass(/is-revealed/);
+  await expect(grid).not.toHaveClass(/is-revealed/);
+  await expect(first).toHaveCSS('opacity','0');
+  await expect(grid).toHaveAttribute('inert','');
+  await page.mouse.wheel(0,24);await expect(grid).toHaveClass(/is-revealed/);await expect(first).toHaveCSS('opacity','1');
+  await expect(grid).not.toHaveAttribute('inert','');
 });

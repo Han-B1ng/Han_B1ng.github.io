@@ -9,7 +9,7 @@ html::-webkit-scrollbar { display:none; }
 }
 .topbar.is-scrolled { height:76px; background:var(--bg); box-shadow:0 12px 28px var(--shadow); }
 .header-track { position:absolute; top:0; left:0; right:0; height:2px; overflow:hidden; opacity:0; transition:opacity .2s; pointer-events:none; }
-.header-track.is-active { opacity:1; }
+.header-track.is-active,.header-track.is-handoff { opacity:1; }
 .header-glow {
   position:absolute; top:0; height:2px; width:clamp(80px,12vw,180px);
   left:calc(var(--scroll-progress,0) * 100%);

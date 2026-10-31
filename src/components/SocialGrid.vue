@@ -17,21 +17,31 @@ const desktopGate = ref(desktopQuery.matches && !motionQuery.matches);
 const revealed = ref(window.scrollY > 4 || motionQuery.matches);
 const columns = ref(5);
 let observer: IntersectionObserver | undefined;
+let topTimer: ReturnType<typeof setTimeout> | undefined;
 function spotlight(event: PointerEvent) {
   if (motionQuery.matches) return;
   const el = event.currentTarget as HTMLElement, rect = el.getBoundingClientRect();
   el.style.setProperty('--spot-x', `${event.clientX - rect.left}px`);
   el.style.setProperty('--spot-y', `${event.clientY - rect.top}px`);
 }
-function reveal() { revealed.value = true; }
+function reveal() { clearTimeout(topTimer); topTimer = undefined; revealed.value = true; }
 function wheel(event: WheelEvent) {
   if (event.deltaY > 0 && !event.ctrlKey && !document.querySelector('[role="dialog"]')) reveal();
 }
-function scroll() { if (window.scrollY > 4) reveal(); }
+function scroll() {
+  if (window.scrollY > 4) { reveal(); return; }
+  if (window.scrollY <= 2 && desktopGate.value && revealed.value && !topTimer) {
+    topTimer = setTimeout(() => {
+      topTimer = undefined;
+      if (window.scrollY <= 2 && desktopGate.value && !document.querySelector('[role="dialog"]')) revealed.value = false;
+    }, 180);
+  }
+}
 function measureColumns() {
   if (root.value) columns.value = getComputedStyle(root.value).gridTemplateColumns.split(' ').length;
 }
 function configure() {
+  clearTimeout(topTimer); topTimer = undefined;
   observer?.disconnect();
   desktopGate.value = desktopQuery.matches && !motionQuery.matches;
   measureColumns();
@@ -55,6 +65,7 @@ onMounted(() => {
   motionQuery.addEventListener('change', configure);
 });
 onBeforeUnmount(() => {
+  clearTimeout(topTimer);
   observer?.disconnect();
   window.removeEventListener('wheel', wheel);
   window.removeEventListener('scroll', scroll);

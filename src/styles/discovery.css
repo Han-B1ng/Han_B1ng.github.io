@@ -1,7 +1,7 @@
 /* Desktop: expose the landmark first; the first downward wheel opens the grid. */
-.social-grid.is-desktop-gated:not(.is-revealed) .social-card{opacity:0;transform:translateY(clamp(32px,6svh,60px));pointer-events:none}
-.social-grid.is-desktop-gated.is-revealed .social-card{animation:wheel-card-rise .48s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:var(--stagger,0ms)}
-@keyframes wheel-card-rise{from{opacity:0;transform:translateY(clamp(32px,6svh,60px))}to{opacity:1;transform:translateY(0)}}
+.social-grid.is-desktop-gated .social-card{transition:opacity .32s ease,transform .42s cubic-bezier(.2,.8,.2,1),box-shadow .35s,border-color .3s;transition-delay:var(--stagger,0ms)}
+.social-grid.is-desktop-gated:not(.is-revealed) .social-card{opacity:0;transform:translateY(clamp(32px,6svh,60px));pointer-events:none;transition-duration:.25s;transition-delay:0s}
+.social-grid.is-desktop-gated.is-revealed .social-card:hover{transition-delay:0s}
 @media(min-width:761px){
   .hero{min-height:clamp(350px,calc(100svh - 240px),760px)}
   .identity-stage{min-height:0;height:clamp(330px,calc(100svh - 300px),640px)}
