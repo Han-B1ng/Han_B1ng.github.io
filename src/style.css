@@ -173,3 +173,57 @@
 @keyframes halo-drift{from{opacity:.7;transform:translate(-16px,12px) scale(.95)}to{opacity:1;transform:translate(18px,-15px) scale(1.1)}}
 :root[data-theme=light] .identity-stage .motion-aura{background:radial-gradient(ellipse,#fff 0%,#fff9 35%,#adb9ce20 52%,transparent 72%)}
 @media(prefers-reduced-motion:reduce){.identity-stage .motion-aura,.identity-stage .orbital-one,.identity-stage .orbit-front,.identity-stage .orbital-two{animation:none!important}}
+
+/* Choreographed entrance: card sweeps from left with a 360° flip, wipes main headings, fades subcopy, and drops topbar. */
+.hero{position:relative}
+.hero-copy{position:relative;z-index:1}
+.identity-stage{position:relative;z-index:3}
+.identity-stage.is-entering .float-anchor{pointer-events:none}
+.card-entrance{width:100%;height:100%;transform-style:preserve-3d;animation:card-sweep-in 1.48s cubic-bezier(.22,1,.32,1) both;will-change:transform}
+.identity-stage:not(.is-entering) .card-entrance{animation:none;transform:none;will-change:auto}
+.copy-wipe{animation:copy-wipe-reveal .76s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--wipe-delay,200ms);will-change:clip-path,transform,opacity,filter}
+.copy-fade{animation:copy-fade-in .68s cubic-bezier(.22,1,.36,1) both;animation-delay:var(--fade-delay,920ms)}
+.topbar-drop{animation:topbar-drop-in .72s cubic-bezier(.22,1,.36,1) both;animation-delay:1160ms}
+.stage-ambient{animation:stage-ambient-fade .75s ease-out both;animation-delay:960ms}
+@keyframes card-sweep-in{
+  0%{opacity:0;transform:translate3d(-660px,14px,90px) rotateY(-360deg) rotateZ(-8deg) scale(.9)}
+  12%{opacity:1}
+  48%{opacity:1;transform:translate3d(-300px,-14px,130px) rotateY(-180deg) rotateZ(4deg) scale(1.03)}
+  82%{opacity:1;transform:translate3d(14px,4px,16px) rotateY(-12deg) rotateZ(-1deg) scale(1.005)}
+  100%{opacity:1;transform:translate3d(0,0,0) rotateY(0deg) rotateZ(0deg) scale(1)}
+}
+@keyframes copy-wipe-reveal{
+  0%{opacity:.15;clip-path:inset(-15% 100% -15% -5%);transform:translateX(-26px);filter:blur(6px)}
+  100%{opacity:1;clip-path:inset(-15% -5% -15% -5%);transform:translateX(0);filter:blur(0)}
+}
+@keyframes copy-fade-in{
+  0%{opacity:0;transform:translateY(14px);filter:blur(4px)}
+  100%{opacity:1;transform:translateY(0);filter:blur(0)}
+}
+@keyframes topbar-drop-in{
+  0%{opacity:0;transform:translateY(-36px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@keyframes stage-ambient-fade{
+  0%{opacity:0}
+  100%{opacity:1}
+}
+@media(max-width:1050px){
+  @keyframes card-sweep-in{
+    0%{opacity:0;transform:translate3d(-480px,10px,70px) rotateY(-360deg) rotateZ(-7deg) scale(.9)}
+    12%{opacity:1}
+    48%{opacity:1;transform:translate3d(-220px,-10px,100px) rotateY(-180deg) rotateZ(3deg) scale(1.02)}
+    100%{opacity:1;transform:translate3d(0,0,0) rotateY(0deg) rotateZ(0deg) scale(1)}
+  }
+}
+@media(max-width:760px){
+  @keyframes card-sweep-in{
+    0%{opacity:0;transform:translate3d(-85vw,-110px,60px) rotateY(-360deg) rotateZ(-8deg) scale(.88)}
+    14%{opacity:1}
+    50%{opacity:1;transform:translate3d(-28vw,-45px,90px) rotateY(-180deg) rotateZ(3deg) scale(1.02)}
+    100%{opacity:1;transform:translate3d(0,0,0) rotateY(0deg) rotateZ(0deg) scale(1)}
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .card-entrance,.copy-wipe,.copy-fade,.topbar-drop,.stage-ambient{animation:none!important;clip-path:none!important;transform:none!important;filter:none!important;opacity:1!important}
+}

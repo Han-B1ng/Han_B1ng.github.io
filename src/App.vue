@@ -32,6 +32,8 @@ const turnY = ref(0)
 const turning = ref(false)
 const hoverZone = ref<CardZone>('right')
 const coreLayers = [-2.4, -1.2, 0, 1.2, 2.4]
+const entering = ref(true)
+let entranceTimer: ReturnType<typeof setTimeout> | undefined
 let flipTimer: ReturnType<typeof setTimeout> | undefined
 const flipHint = computed(() => {
   const hints = language.value === 'zh'
@@ -95,6 +97,7 @@ function moveStack(event: PointerEvent) {
   if (event.pointerType !== 'mouse') return
   cursor.value = { x: Math.max(12, Math.min(event.clientX + 16, window.innerWidth - 236)), y: Math.min(event.clientY + 22, window.innerHeight - 52) }
   pointerPosition = { x: event.clientX, y: event.clientY }
+  if (entering.value) return
   if (!lightFrame) lightFrame = requestAnimationFrame(updateSurfaceLights)
   hoverZone.value = cardZone(event.clientX, event.clientY)
   if (!turning.value) applyPointerTilt(event.clientX, event.clientY)
@@ -102,6 +105,8 @@ function moveStack(event: PointerEvent) {
 function enterStack(event: PointerEvent) {
   if (event.pointerType !== 'mouse') return
   mouseInside = true
+  pointerPosition = { x: event.clientX, y: event.clientY }
+  if (entering.value) return
   stackPressed.value = true
   moveStack(event)
   clearTimeout(hoverTimer)
@@ -118,7 +123,7 @@ function leaveStack(event?: PointerEvent) {
   resetTilt()
 }
 function activateStack(event: MouseEvent | KeyboardEvent) {
-  if (turning.value) return
+  if (turning.value || entering.value) return
   let zone: CardZone
   if (event instanceof KeyboardEvent) {
     const keys: Record<string, CardZone> = { ArrowUp: 'top', ArrowDown: 'bottom', ArrowLeft: 'left', ArrowRight: 'right' }
@@ -183,6 +188,19 @@ onMounted(() => {
   window.addEventListener('keydown', keydown)
   window.addEventListener('pointerdown', outsideStack)
   void prepareStackQr()
+  if (reducedMotion()) {
+    entering.value = false
+  } else {
+    entranceTimer = setTimeout(() => {
+      entering.value = false
+      if (mouseInside && pointerPosition) {
+        stackPressed.value = true
+        hoverZone.value = cardZone(pointerPosition.x, pointerPosition.y)
+        applyPointerTilt(pointerPosition.x, pointerPosition.y)
+        if (!lightFrame) lightFrame = requestAnimationFrame(updateSurfaceLights)
+      }
+    }, 1520)
+  }
   if ('IntersectionObserver' in window && !reducedMotion()) {
     scrollObserver = new IntersectionObserver(entries => {
       for (const entry of entries) if (entry.isIntersecting) { entry.target.classList.add('in-view'); scrollObserver?.unobserve(entry.target) }
@@ -190,7 +208,7 @@ onMounted(() => {
     document.querySelectorAll('.social-card, .share-strip').forEach(el => { el.classList.add('scroll-enter'); scrollObserver?.observe(el) })
   }
 })
-onBeforeUnmount(() => { cancelAnimationFrame(lightFrame); clearTimeout(timer); clearTimeout(flipTimer); clearTimeout(hoverTimer); clearTimeout(copyTimer); scrollObserver?.disconnect(); clearPoster(); window.removeEventListener('pointerdown', outsideStack); window.removeEventListener('keydown', keydown); document.body.style.overflow = '' })
+onBeforeUnmount(() => { cancelAnimationFrame(lightFrame); clearTimeout(timer); clearTimeout(entranceTimer); clearTimeout(flipTimer); clearTimeout(hoverTimer); clearTimeout(copyTimer); scrollObserver?.disconnect(); clearPoster(); window.removeEventListener('pointerdown', outsideStack); window.removeEventListener('keydown', keydown); document.body.style.overflow = '' })
 watch(modalOpen, async open => {
   document.body.style.overflow = open ? 'hidden' : ''
   if (open) { previousFocus = document.activeElement as HTMLElement; await nextTick(); modal.value?.querySelector<HTMLButtonElement>('button')?.focus() }
@@ -293,7 +311,7 @@ async function makePoster() {
     <div class="atmosphere" aria-hidden="true"></div>
     <div class="grain" aria-hidden="true"></div>
     <div class="layout">
-      <header class="topbar reveal">
+      <header class="topbar topbar-drop">
         <a class="brand" href="#top" :aria-label="t.home"><span class="brand-mark">h<span>.</span></span><span>{{ config.name }}<span class="brand-sub">PERSONAL SPACE</span></span></a>
         <div class="toolbar">
           <button class="language-button" @click="language = language === 'zh' ? 'en' : 'zh'" :aria-label="t.language"><span :class="{ active: language === 'zh' }">中</span><span class="slash">/</span><span :class="{ active: language === 'en' }">EN</span></button>
@@ -304,19 +322,19 @@ async function makePoster() {
       </header>
       <main>
         <section class="hero" aria-labelledby="hero-title">
-          <div class="hero-copy reveal" style="--delay:100ms">
-            <div class="availability"><span class="status-dot"></span>{{ text(config.availability) }}</div>
-            <p class="hello">{{ t.hello }}<span class="hello-line"></span></p>
-            <h1 id="hero-title">{{ config.name }}<span class="title-period">.</span></h1>
-            <h2>{{ text(config.greeting) }}</h2>
-            <p v-if="text(config.bio)" class="bio">{{ text(config.bio) }}</p>
-            <a class="primary-button" href="#connections">{{ t.contact }}<Icon name="arrow" /></a>
-            <div class="hero-meta"><template v-if="text(config.location)"><Icon name="globe" /><span>{{ text(config.location) }}</span><span class="meta-dot">·</span></template><span>{{ config.handle }}</span></div>
+          <div class="hero-copy">
+            <div class="availability copy-fade" style="--fade-delay:920ms"><span class="status-dot"></span>{{ text(config.availability) }}</div>
+            <p class="hello copy-wipe" style="--wipe-delay:200ms">{{ t.hello }}<span class="hello-line"></span></p>
+            <h1 id="hero-title" class="copy-wipe" style="--wipe-delay:280ms">{{ config.name }}<span class="title-period">.</span></h1>
+            <h2 class="copy-wipe" style="--wipe-delay:380ms">{{ text(config.greeting) }}</h2>
+            <p v-if="text(config.bio)" class="bio copy-fade" style="--fade-delay:980ms">{{ text(config.bio) }}</p>
+            <a class="primary-button copy-fade" style="--fade-delay:1060ms" href="#connections">{{ t.contact }}<Icon name="arrow" /></a>
+            <div class="hero-meta copy-fade" style="--fade-delay:1140ms"><template v-if="text(config.location)"><Icon name="globe" /><span>{{ text(config.location) }}</span><span class="meta-dot">·</span></template><span>{{ config.handle }}</span></div>
           </div>
-          <div class="identity-stage reveal" style="--delay:220ms">
-            <div class="orbital orbital-one" aria-hidden="true"></div><div class="orbital orbital-two" aria-hidden="true"></div><div class="motion-aura" aria-hidden="true"></div><div class="motion-sparks" aria-hidden="true"><i v-for="n in 6" :key="n"></i></div>
-            <div class="ground-shadow" aria-hidden="true"></div><div class="orbit-front" aria-hidden="true"></div><span class="stage-coordinate coordinate-top" aria-hidden="true">PERSONAL IDENTITY — 001</span>
-            <div class="float-anchor" @click="activateStack" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack"><div class="float-rig" :class="{ 'is-sharing': stackOpen, 'is-pressed': stackPressed }"><div class="identity-stack" ref="stack" :style="{ '--turn-x': `${turnX}deg`, '--turn-y': `${turnY}deg` }" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl, 'is-pressed': stackPressed, 'is-turning': turning }" role="button" tabindex="0" :aria-label="t.revealShare" :aria-expanded="stackOpen" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)" @keydown.up.prevent="activateStack($event)" @keydown.down.prevent="activateStack($event)" @keydown.left.prevent="activateStack($event)" @keydown.right.prevent="activateStack($event)">
+          <div class="identity-stage" :class="{ 'is-entering': entering }">
+            <div class="orbital orbital-one stage-ambient" aria-hidden="true"></div><div class="orbital orbital-two stage-ambient" aria-hidden="true"></div><div class="motion-aura stage-ambient" aria-hidden="true"></div><div class="motion-sparks" aria-hidden="true"><i v-for="n in 6" :key="n"></i></div>
+            <div class="ground-shadow stage-ambient" aria-hidden="true"></div><div class="orbit-front stage-ambient" aria-hidden="true"></div><span class="stage-coordinate coordinate-top stage-ambient" aria-hidden="true">PERSONAL IDENTITY — 001</span>
+            <div class="float-anchor" @click="activateStack" @pointerenter="enterStack" @pointermove="moveStack" @pointerleave="leaveStack"><div class="card-entrance"><div class="float-rig" :class="{ 'is-sharing': stackOpen, 'is-pressed': stackPressed, 'is-entering': entering }"><div class="identity-stack" ref="stack" :style="{ '--turn-x': `${turnX}deg`, '--turn-y': `${turnY}deg` }" :class="{ 'is-open': stackOpen, 'has-interacted': stackUsed, 'has-copied': copiedValue === shareUrl, 'is-pressed': stackPressed, 'is-turning': turning }" role="button" tabindex="0" :aria-label="t.revealShare" :aria-expanded="stackOpen" @pointerdown="lastPointerType = $event.pointerType" @focus="focusStack" @blur="leaveStack()" @keydown.enter.prevent="activateStack($event)" @keydown.space.prevent="activateStack($event)" @keydown.up.prevent="activateStack($event)" @keydown.down.prevent="activateStack($event)" @keydown.left.prevent="activateStack($event)" @keydown.right.prevent="activateStack($event)">
             <div v-for="z in coreLayers" :key="z" class="card-core-layer" :style="{ '--core-z': `${z}px` }" aria-hidden="true"></div>
             <div class="identity-card identity-front" ref="identity" :aria-hidden="stackOpen"><div class="card-face"><i v-for="n in 4" :key="n" class="surface-probe" :class="`probe-${n}`" aria-hidden="true"></i>
               <div class="card-sheen" aria-hidden="true"></div><div class="motion-glint" aria-hidden="true"></div>
@@ -333,10 +351,10 @@ async function makePoster() {
               <div class="identity-edge"><span>DK CONNECT</span><span><Icon name="arrow" /> {{ t.revealShare }}</span></div>
             </div><span v-if="copiedValue === shareUrl" class="motion-copy-burst" aria-hidden="true">✳</span>
             </div>
-            </div></div><span class="stage-coordinate coordinate-bottom" aria-hidden="true"><span class="tiny-cross">+</span> LESS DISTANCE. MORE CONNECTION.</span>
+            </div></div></div><span class="stage-coordinate coordinate-bottom stage-ambient" aria-hidden="true"><span class="tiny-cross">+</span> LESS DISTANCE. MORE CONNECTION.</span>
           </div>
         </section>
-        <section class="connections reveal" id="connections" aria-labelledby="connections-title" style="--delay:320ms">
+        <section class="connections reveal" id="connections" aria-labelledby="connections-title" style="--delay:1320ms">
           <div class="section-header"><div><p class="eyebrow"><span>01</span> / {{ t.section }}</p><h2 id="connections-title">{{ t.connect }}</h2></div><p class="section-hint">{{ t.hint }}</p></div>
           <div class="social-grid">
             <article v-for="(card, index) in config.cards" :key="card.id" class="social-card" :style="{ '--stagger': `${index % 5 * 65}ms` }" @pointermove="spotlight" @pointerdown="spotlight">
