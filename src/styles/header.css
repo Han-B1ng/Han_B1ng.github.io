@@ -11,6 +11,7 @@ html::-webkit-scrollbar { display:none; }
 .header-track { position:absolute; top:0; left:0; right:0; height:2px; overflow:hidden; opacity:0; transition:opacity .2s; pointer-events:none; }
 .header-track.is-active,.header-track.is-handoff { opacity:1; }
 .header-glow {
+  opacity:0;
   position:absolute; top:0; height:2px; width:clamp(80px,12vw,180px);
   left:calc(var(--scroll-progress,0) * 100%);
   transform:translateX(calc(var(--scroll-progress,0) * -100%));
@@ -50,3 +51,7 @@ html::-webkit-scrollbar { display:none; }
 @media(max-width:760px){.section-bar{margin-bottom:16px}.section-bar-inner{width:min(510px,calc(100% - 40px));padding-top:14px;min-height:30px}.brand-sub{min-width:128px;font-size:6px;letter-spacing:.08em}}
 @media(prefers-reduced-motion:reduce){.section-bar.is-entering{opacity:1;transform:none}.header-identity-enter-active,.header-identity-leave-active{transition:none}}
 @media(max-width:360px){.brand-sub{min-width:100px}.toolbar{gap:4px}.brand{gap:7px}}
+
+/* The idle progress beam must remain hidden while the startup track fades out. */
+.header-track.is-active:not(.is-starting):not(.is-handoff) .header-glow{opacity:1}
+.header-track.is-handoff .header-glow{transition:none}

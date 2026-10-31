@@ -60,10 +60,16 @@ async function interruptSweep() {
     handoffAnimation = glow.animate([
       { left: `${from.left-trackRect.left}px`, width: `${from.width}px`, transform:'none', opacity:fromOpacity },
       { left: `${progress*(trackRect.width-width)}px`, width: `${width}px`, transform:'none', opacity:1 },
-    ], { duration:130, easing:'cubic-bezier(.12,.8,.2,1)' });
+    ], { duration:130, easing:'cubic-bezier(.12,.8,.2,1)', fill:'forwards' });
     handoffAnimation.id = 'scroll-light-handoff';
-    void handoffAnimation.finished.catch(() => {}).then(() => {
-      if (revision === handoffRevision) { sweepHandoff.value = false; handoffAnimation = undefined; }
+    const animation = handoffAnimation;
+    void animation.finished.catch(() => {}).then(async () => {
+      if (revision === handoffRevision) {
+        sweepHandoff.value = false;
+        await nextTick();
+        animation.cancel();
+        if (handoffAnimation === animation) handoffAnimation = undefined;
+      }
     });
   });
 }

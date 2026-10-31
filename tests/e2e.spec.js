@@ -273,3 +273,18 @@ test('desktop grid retreats after a top dwell and can rise again without a reloa
   await page.mouse.wheel(0,24);await expect(grid).toHaveClass(/is-revealed/);await expect(first).toHaveCSS('opacity','1');
   await expect(grid).not.toHaveAttribute('inert','');
 });
+
+
+test('startup finish never exposes the idle progress beam during track fadeout', async ({ page }) => {
+  await page.goto('/');await expect(page.locator('.startup-glow')).toBeVisible();
+  await expect(page.locator('.startup-glow')).toHaveCount(0);
+  const samples=await page.evaluate(()=>new Promise(resolve=>{
+    const out=[],start=performance.now();
+    function frame(){out.push(Number(getComputedStyle(document.querySelector('.header-glow')).opacity));if(performance.now()-start<300)requestAnimationFrame(frame);else resolve(out)}frame();
+  }));
+  expect(samples.every(alpha=>alpha===0)).toBe(true);
+  await page.mouse.wheel(0,100);
+  await expect(page.locator('.header-glow')).toHaveCSS('opacity','1');
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  await expect(page.locator('.header-glow')).toHaveCSS('opacity','0');
+});
